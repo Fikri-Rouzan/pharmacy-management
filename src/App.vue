@@ -1,3 +1,5 @@
 <template>
-  <a>Pharmacy Management</a>
+  <div class="font-outfit">
+    <router-view />
+  </div>
 </template>
