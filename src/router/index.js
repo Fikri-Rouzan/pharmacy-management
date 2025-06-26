@@ -1,33 +1,35 @@
 // src/router/index.js
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
 import { supabase } from '../lib/supabaseClient';
 
-// Import Layout dan Halaman
+// Import Layout dan semua Halaman (Views)
 import MainLayout from '../layouts/MainLayout.vue';
 import Login from '../views/Login.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Profile from '../views/Profile.vue';
+import Medicines from '../views/Medicines.vue';
+import Sales from '../views/Sales.vue';
+import SaleForm from '../views/SaleForm.vue';
+import Purchases from '../views/Purchases.vue';
+import PurchaseForm from '../views/PurchaseForm.vue';
+import Suppliers from '../views/Suppliers.vue'; // <-- IMPORT HALAMAN BARU
 
 const routes = [
-  { 
-    path: '/login', 
-    name: 'Login', 
-    component: Login 
-  },
+  { path: '/login', name: 'Login', component: Login },
   {
-    // Rute ini akan menggunakan MainLayout sebagai bungkusnya
     path: '/',
     component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', redirect: '/dashboard' }, // Redirect / ke /dashboard
+      { path: '', redirect: '/dashboard' }, 
       { path: 'dashboard', name: 'Dashboard', component: Dashboard },
       { path: 'profile', name: 'Profile', component: Profile },
-      // Rute lain di dalam layout
-      { path: 'medicines', name: 'Medicines', component: { template: '<div>Halaman Data Obat</div>' } },
-      { path: 'sales', name: 'Sales', component: { template: '<div>Halaman Data Penjualan</div>' } },
-      { path: 'purchases', name: 'Purchases', component: { template: '<div>Halaman Data Pembelian</div>' } },
-      { path: 'suppliers', name: 'Suppliers', component: { template: '<div>Halaman Data Supplier</div>' } },
+      { path: 'medicines', name: 'Medicines', component: Medicines },
+      { path: 'sales', name: 'Sales', component: Sales },
+      { path: 'sales/new', name: 'SaleForm', component: SaleForm },
+      { path: 'purchases', name: 'Purchases', component: Purchases },
+      { path: 'purchases/new', name: 'PurchaseForm', component: PurchaseForm },
+      { path: 'suppliers', name: 'Suppliers', component: Suppliers }, // <-- GANTI DENGAN KOMPONEN ASLI
     ]
   }
 ];
@@ -37,7 +39,6 @@ const router = createRouter({
   routes,
 });
 
-// Penjaga Rute (Navigation Guard)
 router.beforeEach(async (to, from, next) => {
   const { data: { session } } = await supabase.auth.getSession();
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);

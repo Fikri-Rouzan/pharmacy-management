@@ -3,7 +3,8 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { supabase } from "../lib/supabaseClient";
 import Swal from "sweetalert2";
-import { Mail, Lock, ArrowRight } from "lucide-vue-next";
+// Tambahkan ikon Eye dan EyeOff
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-vue-next";
 
 // State untuk form
 const email = ref("");
@@ -11,6 +12,9 @@ const password = ref("");
 const loading = ref(false);
 const router = useRouter();
 const logoExists = ref(true);
+
+// State baru untuk toggle password
+const showPassword = ref(false);
 
 // Fungsi untuk menangani login
 const handleLogin = async () => {
@@ -81,11 +85,19 @@ const handleLogin = async () => {
           <input
             v-model="password"
             id="password"
-            type="password"
+            :type="showPassword ? 'text' : 'password'"
             required
-            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+            class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
             placeholder="Password"
           />
+          <button
+            type="button"
+            @click="showPassword = !showPassword"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-primary"
+          >
+            <EyeOff v-if="showPassword" class="w-5 h-5" />
+            <Eye v-else class="w-5 h-5" />
+          </button>
         </div>
 
         <div class="pt-2">
