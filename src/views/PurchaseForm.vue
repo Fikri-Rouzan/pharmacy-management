@@ -1,45 +1,74 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { supabase } from '../lib/supabaseClient';
 import Swal from 'sweetalert2';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
+import SearchableSelect from '../components/SearchableSelect.vue';
 
 const router = useRouter();
 const loading = ref(false);
 
-// State untuk form
+// --- State ---
 const suppliers = ref([]);
-const medicines = ref([]);
+const allMedicines = ref([]);
 const selectedSupplierId = ref(null);
 const selectedMedicineId = ref(null);
 const quantity = ref(1);
 const purchasePrice = ref(0);
 const cart = ref([]);
 
-// Ambil daftar supplier dan obat saat halaman dimuat
-async function fetchData() {
-  const { data: supplierData } = await supabase.from('suppliers').select('id, name').order('name');
-  suppliers.value = supplierData;
-
-  const { data: medicineData } = await supabase.from('medicines').select('id, name').order('name');
-  medicines.value = medicineData;
-}
+// --- Computed Properties ---
+const filteredMedicines = computed(() => {
+  if (!selectedSupplierId.value) return [];
+  return allMedicines.value.filter(med => med.supplier_id === selectedSupplierId.value);
+});
 
 const grandTotal = computed(() => {
   return cart.value.reduce((total, item) => total + item.subtotal, 0);
 });
 
-function formatCurrency(value) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+// --- Watchers (Logika Reaktif) ---
+
+// Mengawasi perubahan pilihan obat untuk otomatis mengisi harga
+watch(selectedMedicineId, (newMedicineId) => {
+  if (newMedicineId) {
+    // Langsung cari obat yang dipilih di daftar yang sudah ada (tidak perlu query lagi)
+    const selected = allMedicines.value.find(m => m.id === newMedicineId);
+    if (selected) {
+      // Ambil harga beli standarnya dari tabel medicines
+      purchasePrice.value = selected.purchase_price || 0;
+    }
+  }
+});
+
+// Saat supplier diganti, reset pilihan obat dan harga
+watch(selectedSupplierId, () => {
+    selectedMedicineId.value = null;
+    purchasePrice.value = 0;
+});
+
+
+// --- Methods ---
+
+// Mengambil data awal saat halaman dimuat
+async function fetchData() {
+  const { data: supplierData } = await supabase.from('suppliers').select('id, name').order('name');
+  suppliers.value = supplierData || [];
+  
+  // Ambil semua data obat termasuk harga beli standarnya
+  const { data: medicineData } = await supabase.from('medicines').select('id, name, supplier_id, purchase_price').order('name');
+  allMedicines.value = medicineData || [];
 }
+
+const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
 
 function addToCart() {
   if (!selectedMedicineId.value || quantity.value <= 0 || purchasePrice.value <= 0) {
     Swal.fire('Info', 'Pilih obat, lalu isi jumlah dan harga beli yang valid.', 'info');
     return;
   }
-  const selected = medicines.value.find(m => m.id === selectedMedicineId.value);
+  const selected = allMedicines.value.find(m => m.id === selectedMedicineId.value);
   cart.value.push({
     medicine_id: selected.id,
     name: selected.name,
@@ -64,18 +93,14 @@ async function savePurchase() {
   loading.value = true;
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: purchaseData, error: purchaseError } = await supabase
-      .from('purchases')
-      .insert({
-        employee_id: user.id,
-        supplier_id: selectedSupplierId.value,
-        total_amount: grandTotal.value
-      })
-      .select('id')
-      .single();
-
+    const { data: purchaseData, error: purchaseError } = await supabase.from('purchases').insert({
+      employee_id: user.id,
+      supplier_id: selectedSupplierId.value,
+      total_amount: grandTotal.value
+    }).select('id').single();
+    
     if (purchaseError) throw purchaseError;
-
+    
     const purchaseId = purchaseData.id;
     const itemsToInsert = cart.value.map(item => ({
       purchase_id: purchaseId,
@@ -89,7 +114,6 @@ async function savePurchase() {
 
     Swal.fire('Sukses!', 'Transaksi pembelian berhasil disimpan.', 'success');
     router.push('/purchases');
-
   } catch (error) {
     console.error('Error saving purchase:', error);
     Swal.fire('Error', `Gagal menyimpan transaksi: ${error.message}`, 'error');
@@ -112,57 +136,67 @@ onMounted(fetchData);
         <p class="mt-1 text-sm text-gray-500">Catat obat yang masuk dari supplier.</p>
       </div>
     </div>
-
+    
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-lg space-y-6">
-        <div>
-          <label for="supplier" class="block text-sm font-medium text-gray-700">Pilih Supplier</label>
-          <select v-model="selectedSupplierId" id="supplier" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-            <option :value="null" disabled>-- Pilih supplier --</option>
-            <option v-for="sup in suppliers" :key="sup.id" :value="sup.id">{{ sup.name }}</option>
-          </select>
+      <div class="lg:col-span-2 bg-white rounded-lg shadow-lg">
+        <div class="p-4 bg-gray-50 border-b">
+          <h3 class="text-xl font-semibold">Data Pembelian</h3>
         </div>
-        <hr/>
-        <div>
-          <h3 class="text-xl font-semibold">Tambah Item Obat</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-4">
-            <div class="md:col-span-2">
-              <label for="medicine" class="block text-sm font-medium text-gray-700">Pilih Obat</label>
-              <select v-model="selectedMedicineId" id="medicine" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                <option :value="null" disabled>-- Cari obat --</option>
-                <option v-for="med in medicines" :key="med.id" :value="med.id">{{ med.name }}</option>
-              </select>
-            </div>
-            <div>
-              <label for="purchasePrice" class="block text-sm font-medium text-gray-700">Harga Beli</label>
-              <input v-model.number="purchasePrice" type="number" id="purchasePrice" min="0" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-            </div>
-            <div>
-              <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
-              <input v-model.number="quantity" type="number" id="quantity" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-            </div>
+        <div class="p-6 space-y-6">
+          <div>
+            <label for="supplier" class="block text-sm font-medium text-gray-700">Pilih Supplier</label>
+            <SearchableSelect
+              v-model="selectedSupplierId"
+              :options="suppliers"
+              placeholder="-- Cari & pilih supplier --"
+              class="mt-1"
+            />
           </div>
-          <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-blue-100 text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
-            <Plus class="w-5 h-5 mr-2" />
-            Tambah ke Daftar Pembelian
-          </button>
+          <hr/>
+          <div>
+            <h3 class="text-lg font-semibold">Tambah Item Obat</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-4">
+              <div class="md:col-span-2">
+                <label for="medicine" class="block text-sm font-medium text-gray-700">Pilih Obat</label>
+                <SearchableSelect
+                  v-model="selectedMedicineId"
+                  :options="filteredMedicines"
+                  :disabled="!selectedSupplierId"
+                  placeholder="-- Pilih supplier dulu --"
+                  class="mt-1"
+                />
+              </div>
+              <div>
+                <label for="purchasePrice" class="block text-sm font-medium text-gray-700">Harga Beli</label>
+                <input v-model.number="purchasePrice" type="number" id="purchasePrice" min="0" placeholder="Otomatis" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+              </div>
+              <div>
+                <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
+                <input v-model.number="quantity" type="number" id="quantity" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+              </div>
+            </div>
+            <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-secondary text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
+              <Plus class="w-5 h-5 mr-2" />
+              Tambah ke Daftar Pembelian
+            </button>
+          </div>
         </div>
       </div>
-
+      
       <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-lg">
-        <h3 class="text-xl font-semibold mb-4 border-b pb-2">Daftar Pembelian</h3>
-        <div class="space-y-4 max-h-64 overflow-y-auto pr-2">
+        <div class="p-4 bg-gray-50 border-b -m-6 mb-6">
+          <h3 class="text-xl font-semibold">Daftar Pembelian</h3>
+        </div>
+        <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
           <p v-if="cart.length === 0" class="text-gray-500 text-center py-4">Belum ada item.</p>
-          <div v-for="(item, index) in cart" :key="item.medicine_id" class="flex justify-between items-center">
+          <div v-for="(item, index) in cart" :key="index" class="flex justify-between items-center">
             <div>
               <p class="font-semibold">{{ item.name }}</p>
               <p class="text-sm text-gray-500">{{ item.quantity }} x {{ formatCurrency(item.purchase_price) }}</p>
             </div>
             <div class="flex items-center">
                <p class="font-semibold mr-4">{{ formatCurrency(item.subtotal) }}</p>
-               <button @click="removeFromCart(index)" class="p-1 text-red-500 hover:bg-red-100 rounded-full">
-                 <Trash2 class="w-4 h-4" />
-               </button>
+               <button @click="removeFromCart(index)" class="p-1 text-red-500 hover:bg-red-100 rounded-full"><Trash2 class="w-4 h-4" /></button>
             </div>
           </div>
         </div>
