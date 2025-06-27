@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { Pill, ShoppingCart, Archive, Truck } from 'lucide-vue-next';
 import { supabase } from '../lib/supabaseClient';
 
+// --- Logika script tetap sama, tidak diubah ---
 const medicineCount = ref(0);
 const supplierCount = ref(0);
 const purchaseCount = ref(0);
@@ -26,58 +27,46 @@ onMounted(fetchSummaryData);
 </script>
 
 <template>
-  <div class="container mx-auto">
-    <h1 class="text-3xl font-semibold text-gray-800">Dashboard</h1>
-    <p class="mt-2 text-sm text-gray-500">Ringkasan data inventaris Anda</p>
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <p class="mt-1 text-base text-gray-500">Ringkasan data inventaris dan penjualan Anda.</p>
     
-    <div class="grid grid-cols-1 gap-6 mt-6 sm:grid-cols-2 lg:grid-cols-4">
-       
-      <router-link to="/medicines" class="p-5 bg-white rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-        <div class="flex items-center">
-            <div class="p-3 bg-primary rounded-full">
-                <Pill class="w-6 h-6 text-white"/>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Data Obat</p>
-                <p class="text-2xl font-bold text-gray-800">{{ medicineCount }}</p>
-            </div>
-        </div>
+    <div class="grid grid-cols-1 gap-6 mt-8 sm:grid-cols-2 lg:grid-cols-4">
+        
+      <router-link 
+        to="/medicines" 
+        class="block p-6 rounded-xl transition-all duration-300 transform hover:-translate-y-2 shadow-lg bg-sky-100 hover:shadow-sky-200/50"
+      >
+        <Pill class="w-10 h-10 mb-4 text-[#1976D2]"/>
+        <p class="text-base font-semibold text-slate-600">Total Obat</p>
+        <p class="text-4xl font-bold text-slate-800">{{ medicineCount }}</p>
       </router-link>
 
-      <router-link to="/sales" class="p-5 bg-white rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-        <div class="flex items-center">
-            <div class="p-3 bg-red-500 rounded-full">
-                <ShoppingCart class="w-6 h-6 text-white"/>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Data Penjualan</p>
-                <p class="text-2xl font-bold text-gray-800">{{ saleCount }}</p>
-            </div>
-        </div>
+      <router-link 
+        to="/sales" 
+        class="block p-6 rounded-xl transition-all duration-300 transform hover:-translate-y-2 shadow-lg bg-emerald-100 hover:shadow-emerald-200/50"
+      >
+        <ShoppingCart class="w-10 h-10 mb-4 text-emerald-600"/>
+        <p class="text-base font-semibold text-slate-600">Total Penjualan</p>
+        <p class="text-4xl font-bold text-slate-800">{{ saleCount }}</p>
       </router-link>
 
-      <router-link to="/purchases" class="p-5 bg-white rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-        <div class="flex items-center">
-            <div class="p-3 bg-amber-500 rounded-full">
-                <Archive class="w-6 h-6 text-white"/>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Data Pembelian</p>
-                <p class="text-2xl font-bold text-gray-800">{{ purchaseCount }}</p>
-            </div>
-        </div>
+      <router-link 
+        to="/purchases" 
+        class="block p-6 rounded-xl transition-all duration-300 transform hover:-translate-y-2 shadow-lg bg-amber-100 hover:shadow-amber-200/50"
+      >
+        <Archive class="w-10 h-10 mb-4 text-amber-600"/>
+        <p class="text-base font-semibold text-slate-600">Total Pembelian</p>
+        <p class="text-4xl font-bold text-slate-800">{{ purchaseCount }}</p>
       </router-link>
 
-      <router-link to="/suppliers" class="p-5 bg-white rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-        <div class="flex items-center">
-            <div class="p-3 bg-emerald-500 rounded-full">
-                <Truck class="w-6 h-6 text-white"/>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Data Supplier</p>
-                <p class="text-2xl font-bold text-gray-800">{{ supplierCount }}</p>
-            </div>
-        </div>
+      <router-link 
+        to="/suppliers" 
+        class="block p-6 rounded-xl transition-all duration-300 transform hover:-translate-y-2 shadow-lg bg-violet-100 hover:shadow-violet-200/50"
+      >
+        <Truck class="w-10 h-10 mb-4 text-violet-600"/>
+        <p class="text-base font-semibold text-slate-600">Total Supplier</p>
+        <p class="text-4xl font-bold text-slate-800">{{ supplierCount }}</p>
       </router-link>
 
     </div>
