@@ -1,46 +1,86 @@
 <script setup>
-import { LayoutDashboard, Pill, ShoppingCart, Archive, Truck } from 'lucide-vue-next';
+import { LayoutDashboard, Pill, ShoppingCart, Archive, Truck, X } from 'lucide-vue-next';
 
-defineProps({
-  isOpen: Boolean,
-});
+const emit = defineEmits(['close']);
+defineProps({ isOpen: Boolean });
+
+const closeSidebar = () => {
+  emit('close');
+};
 </script>
 
 <template>
-  <aside
-    :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed inset-y-0 left-0 z-30 w-64 px-4 py-7 overflow-y-auto bg-white border-r-2 shadow-sm transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
-  >
-    <div class="flex items-center justify-center px-6">
-       <img src="/logo.png" alt="Logo" class="w-10 h-10">
-       <span class="ml-3 text-xl font-bold text-gray-800">PharmaSys</span>
-    </div>
+  <div :class="isOpen ? 'fixed inset-0 z-40' : ''">
+    <div v-if="isOpen" @click="closeSidebar" class="absolute inset-0 bg-black opacity-50 transition-opacity md:hidden"></div>
+    <aside :class="isOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out flex flex-col h-full md:relative md:translate-x-0">
+      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
+        <router-link to="/dashboard" @click="closeSidebar" class="flex items-center focus:outline-none">
+          <img src="/logo.png" alt="Logo" class="w-9 h-9">
+          <span class="ml-3 text-xl font-bold text-primary">PharmaSys</span>
+        </router-link>
+        <button @click="closeSidebar" class="p-2 rounded-full md:hidden hover:bg-gray-200">
+          <X class="w-6 h-6 text-gray-600"/>
+        </button>
+      </div>
 
-    <nav class="mt-10">
-      <router-link to="/dashboard" class="flex items-center px-6 py-3 mt-2 text-gray-700 rounded-lg hover:bg-secondary hover:text-primary transition-colors" active-class="bg-secondary text-primary font-bold">
-         <LayoutDashboard class="w-5 h-5"/>
-         <span class="mx-4">Dashboard</span>
-      </router-link>
+      <nav class="flex-grow px-4 py-4 overflow-y-auto">
+        <router-link to="/dashboard" @click="closeSidebar" class="nav-link">
+          <LayoutDashboard class="w-6 h-6"/>
+          <span class="ml-4">Dashboard</span>
+        </router-link>
 
-      <router-link to="/medicines" class="flex items-center px-6 py-3 mt-2 text-gray-700 rounded-lg hover:bg-secondary hover:text-primary transition-colors" active-class="bg-secondary text-primary font-bold">
-         <Pill class="w-5 h-5"/>
-         <span class="mx-4">Data Obat</span>
-      </router-link>
+        <router-link to="/medicines" @click="closeSidebar" class="nav-link">
+          <Pill class="w-6 h-6"/>
+          <span class="ml-4">Data Obat</span>
+        </router-link>
 
-      <router-link to="/sales" class="flex items-center px-6 py-3 mt-2 text-gray-700 rounded-lg hover:bg-secondary hover:text-primary transition-colors" active-class="bg-secondary text-primary font-bold">
-         <ShoppingCart class="w-5 h-5"/>
-         <span class="mx-4">Data Penjualan</span>
-      </router-link>
+        <router-link to="/sales" @click="closeSidebar" class="nav-link">
+          <ShoppingCart class="w-6 h-6"/>
+          <span class="ml-4">Data Penjualan</span>
+        </router-link>
 
-      <router-link to="/purchases" class="flex items-center px-6 py-3 mt-2 text-gray-700 rounded-lg hover:bg-secondary hover:text-primary transition-colors" active-class="bg-secondary text-primary font-bold">
-         <Archive class="w-5 h-5"/>
-         <span class="mx-4">Data Pembelian</span>
-      </router-link>
+        <router-link to="/purchases" @click="closeSidebar" class="nav-link">
+          <Archive class="w-6 h-6"/>
+          <span class="ml-4">Data Pembelian</span>
+        </router-link>
 
-      <router-link to="/suppliers" class="flex items-center px-6 py-3 mt-2 text-gray-700 rounded-lg hover:bg-secondary hover:text-primary transition-colors" active-class="bg-secondary text-primary font-bold">
-         <Truck class="w-5 h-5"/>
-         <span class="mx-4">Data Supplier</span>
-      </router-link>
-    </nav>
-  </aside>
+        <router-link to="/suppliers" @click="closeSidebar" class="nav-link">
+          <Truck class="w-6 h-6"/>
+          <span class="ml-4">Data Supplier</span>
+        </router-link>
+      </nav>
+    </aside>
+  </div>
 </template>
+
+<style scoped>
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+/* Styling hover untuk link yang tidak aktif (Warna Sekunder) */
+.nav-link:not(.router-link-exact-active):hover {
+  background-color: #64B5F6;
+  color: white;
+}
+
+/* --- INI PERBAIKANNYA --- */
+/* Styling untuk link yang aktif (Warna Primer) hanya untuk .nav-link */
+.nav-link.router-link-exact-active {
+  background-color: #1976D2;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  pointer-events: none;
+}
+
+nav .nav-link:first-child {
+  margin-top: 0;
+}
+</style>
