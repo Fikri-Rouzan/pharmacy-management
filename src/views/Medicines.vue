@@ -1,26 +1,21 @@
 <script setup>
-// 1. Tambahkan 'computed' dari vue dan ikon 'Search'
 import { ref, onMounted, computed } from 'vue';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient'; // Pastikan path ini benar
 import Swal from 'sweetalert2';
-import MedicineModal from '../components/MedicineModal.vue';
+import MedicineModal from '../components/MedicineModal.vue'; // Pastikan path ini benar
 import { Plus, Edit, Trash2, Search } from 'lucide-vue-next';
 
 const medicines = ref([]);
 const loading = ref(true);
 const isModalOpen = ref(false);
 const selectedMedicine = ref(null);
-
-// 2. State baru untuk menampung teks pencarian
 const searchQuery = ref('');
 
-// 3. Computed property untuk memfilter data obat secara dinamis
+// Computed property untuk memfilter data obat secara dinamis berdasarkan pencarian
 const filteredMedicines = computed(() => {
-  // Jika kotak pencarian kosong, tampilkan semua obat
   if (!searchQuery.value) {
     return medicines.value;
   }
-  // Jika ada teks, filter data
   const query = searchQuery.value.toLowerCase();
   return medicines.value.filter(medicine => {
     const nameMatch = medicine.name.toLowerCase().includes(query);
@@ -31,10 +26,9 @@ const filteredMedicines = computed(() => {
   });
 });
 
-
+// Fungsi untuk mengambil data obat dari Supabase
 async function fetchMedicines() {
   loading.value = true;
-  // Ambil data obat beserta nama suppliernya (JOIN)
   const { data, error } = await supabase
     .from('medicines')
     .select(`
@@ -45,25 +39,28 @@ async function fetchMedicines() {
 
   if (error) {
     console.error('Error fetching medicines:', error);
+    Swal.fire('Error', `Gagal mengambil data: ${error.message}`, 'error');
   } else {
     medicines.value = data;
   }
   loading.value = false;
 }
 
+// Fungsi untuk membuka modal tambah obat
 function openAddModal() {
   selectedMedicine.value = null;
   isModalOpen.value = true;
 }
 
+// Fungsi untuk membuka modal edit obat
 function openEditModal(medicine) {
   selectedMedicine.value = medicine;
   isModalOpen.value = true;
 }
 
+// Fungsi untuk menyimpan data (baik tambah maupun edit)
 async function handleSave(medicineData) {
   let error;
-  // Hapus data relasi suppliers sebelum menyimpan
   const { suppliers, ...dataToSave } = medicineData;
 
   if (dataToSave.id) {
@@ -84,10 +81,11 @@ async function handleSave(medicineData) {
   }
 }
 
+// Fungsi untuk menghapus data
 async function handleDelete(medicine) {
   const { isConfirmed } = await Swal.fire({
     title: 'Anda yakin?',
-    text: `Anda akan menghapus obat "${medicine.name}".`,
+    text: `Anda akan menghapus obat "${medicine.name}". Aksi ini tidak bisa dibatalkan.`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -107,11 +105,12 @@ async function handleDelete(medicine) {
   }
 }
 
+// Panggil fetchMedicines saat komponen pertama kali dimuat
 onMounted(fetchMedicines);
 </script>
 
 <template>
-  <div class="container mx-auto">
+  <div class="container mx-auto p-4 md:p-6">
     <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
       <div>
         <h1 class="text-3xl font-bold text-gray-800">Data Obat</h1>
@@ -125,8 +124,8 @@ onMounted(fetchMedicines);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari obat, tipe, supplier..." 
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+            placeholder="Cari " 
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition"
           >
         </div>
         <button @click="openAddModal" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-opacity-90 transition whitespace-nowrap">
@@ -136,45 +135,45 @@ onMounted(fetchMedicines);
       </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-100">
+        <table class="w-full border-collapse">
+          <thead class="bg-secondary">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Nama Obat</th>
-              <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tipe</th>
-              <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Stok</th>
-              <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Harga Jual</th>
-              <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pemasok</th>
-              <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Aksi</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b border-gray-300">Nama Obat</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b border-gray-300">Tipe</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b border-gray-300">Stok</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b border-gray-300">Harga Jual</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b border-gray-300">Pemasok</th>
+              <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider border-b border-gray-300">Aksi</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="bg-white">
             <tr v-if="loading">
-              <td colspan="6" class="p-6 text-center text-gray-500">Memuat data...</td>
+              <td colspan="6" class="p-6 text-center text-gray-500 border-t border-gray-200">Memuat data...</td>
             </tr>
             <tr v-else-if="filteredMedicines.length === 0">
-              <td colspan="6" class="p-6 text-center text-gray-500">
+              <td colspan="6" class="p-6 text-center text-gray-500 border-t border-gray-200">
                 <span v-if="searchQuery">Obat tidak ditemukan untuk pencarian "{{ searchQuery }}".</span>
                 <span v-else>Tidak ada data obat.</span>
               </td>
             </tr>
-            <tr v-for="medicine in filteredMedicines" :key="medicine.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ medicine.name }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ medicine.type }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
+            <tr v-for="medicine in filteredMedicines" :key="medicine.id" class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 border-t border-gray-200">{{ medicine.name }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t border-gray-200">{{ medicine.type }}</td>
+              <td class="px-6 py-4 whitespace-nowrap border-t border-gray-200">
                 <span 
                   :class="medicine.stock_quantity < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'" 
                   class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
                   {{ medicine.stock_quantity }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-gray-600">Rp {{ medicine.selling_price.toLocaleString('id-ID') }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ medicine.suppliers?.name || 'N/A' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex justify-end space-x-2">
-                  <button @click="openEditModal(medicine)" class="p-2 text-primary hover:bg-secondary rounded-full"><Edit class="w-4 h-4" /></button>
-                  <button @click="handleDelete(medicine)" class="p-2 text-red-500 hover:bg-red-100 rounded-full"><Trash2 class="w-4 h-4" /></button>
+              <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t border-gray-200">Rp {{ medicine.selling_price.toLocaleString('id-ID') }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t border-gray-200">{{ medicine.suppliers?.name || 'N/A' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-t border-gray-200">
+                <div class="flex justify-end items-center space-x-1">
+                  <button @click="openEditModal(medicine)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition"><Edit class="w-4 h-4" /></button>
+                  <button @click="handleDelete(medicine)" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition"><Trash2 class="w-4 h-4" /></button>
                 </div>
               </td>
             </tr>

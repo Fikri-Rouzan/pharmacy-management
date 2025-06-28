@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient'; // Pastikan path ini benar
 import Swal from 'sweetalert2';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
-import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchableSelect from '../components/SearchableSelect.vue'; // Pastikan path ini benar
 
 const router = useRouter();
 const loading = ref(false);
@@ -33,10 +33,8 @@ const grandTotal = computed(() => {
 // Mengawasi perubahan pilihan obat untuk otomatis mengisi harga
 watch(selectedMedicineId, (newMedicineId) => {
   if (newMedicineId) {
-    // Langsung cari obat yang dipilih di daftar yang sudah ada (tidak perlu query lagi)
     const selected = allMedicines.value.find(m => m.id === newMedicineId);
     if (selected) {
-      // Ambil harga beli standarnya dari tabel medicines
       purchasePrice.value = selected.purchase_price || 0;
     }
   }
@@ -56,7 +54,6 @@ async function fetchData() {
   const { data: supplierData } = await supabase.from('suppliers').select('id, name').order('name');
   suppliers.value = supplierData || [];
   
-  // Ambil semua data obat termasuk harga beli standarnya
   const { data: medicineData } = await supabase.from('medicines').select('id, name, supplier_id, purchase_price').order('name');
   allMedicines.value = medicineData || [];
 }
@@ -85,6 +82,7 @@ function removeFromCart(index) {
   cart.value.splice(index, 1);
 }
 
+// FUNGSI INI SUDAH DISESUAIKAN DENGAN LOGIKA UPDATE STOK & HARGA
 async function savePurchase() {
   if (cart.value.length === 0 || !selectedSupplierId.value) {
     Swal.fire('Data Tidak Lengkap', 'Pilih supplier dan tambahkan setidaknya satu obat.', 'warning');
@@ -92,7 +90,10 @@ async function savePurchase() {
   }
   loading.value = true;
   try {
+    // Langkah 1: Ambil data user
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Langkah 2: Simpan data utama pembelian
     const { data: purchaseData, error: purchaseError } = await supabase.from('purchases').insert({
       employee_id: user.id,
       supplier_id: selectedSupplierId.value,
@@ -102,6 +103,8 @@ async function savePurchase() {
     if (purchaseError) throw purchaseError;
     
     const purchaseId = purchaseData.id;
+
+    // Langkah 3: Siapkan dan simpan item-item detail pembelian
     const itemsToInsert = cart.value.map(item => ({
       purchase_id: purchaseId,
       medicine_id: item.medicine_id,
@@ -112,8 +115,32 @@ async function savePurchase() {
     const { error: itemsError } = await supabase.from('purchase_items').insert(itemsToInsert);
     if (itemsError) throw itemsError;
 
-    Swal.fire('Sukses!', 'Transaksi pembelian berhasil disimpan.', 'success');
+    // LANGKAH 4: UPDATE STOK DAN HARGA BELI MASTER SETELAH TRANSAKSI SUKSES
+    for (const item of cart.value) {
+      // 4a. Update harga beli terakhir di tabel 'medicines'
+      const { error: updatePriceError } = await supabase
+        .from('medicines')
+        .update({ purchase_price: item.purchase_price })
+        .eq('id', item.medicine_id);
+
+      if (updatePriceError) {
+        console.warn(`Gagal update harga master untuk obat ID ${item.medicine_id}:`, updatePriceError);
+      }
+      
+      // 4b. Tambah stok di tabel 'medicines' menggunakan RPC
+      const { error: updateStockError } = await supabase.rpc('increment_stock', {
+        medicine_id_input: item.medicine_id,
+        quantity_input: item.quantity
+      });
+
+      if (updateStockError) {
+        console.warn(`Gagal update stok untuk obat ID ${item.medicine_id}:`, updateStockError);
+      }
+    }
+
+    Swal.fire('Sukses!', 'Transaksi pembelian berhasil disimpan. Stok dan harga telah diperbarui.', 'success');
     router.push('/purchases');
+
   } catch (error) {
     console.error('Error saving purchase:', error);
     Swal.fire('Error', `Gagal menyimpan transaksi: ${error.message}`, 'error');
@@ -126,7 +153,7 @@ onMounted(fetchData);
 </script>
 
 <template>
-  <div class="container mx-auto">
+  <div class="container mx-auto p-4 md:p-6">
     <div class="flex items-center mb-6">
       <button @click="router.back()" class="p-2 mr-4 rounded-full hover:bg-gray-200" title="Kembali">
         <ArrowLeft class="w-6 h-6 text-gray-700" />
@@ -175,7 +202,7 @@ onMounted(fetchData);
                 <input v-model.number="quantity" type="number" id="quantity" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
               </div>
             </div>
-            <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-secondary text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
+            <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-blue-100 text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
               <Plus class="w-5 h-5 mr-2" />
               Tambah ke Daftar Pembelian
             </button>
@@ -195,8 +222,8 @@ onMounted(fetchData);
               <p class="text-sm text-gray-500">{{ item.quantity }} x {{ formatCurrency(item.purchase_price) }}</p>
             </div>
             <div class="flex items-center">
-               <p class="font-semibold mr-4">{{ formatCurrency(item.subtotal) }}</p>
-               <button @click="removeFromCart(index)" class="p-1 text-red-500 hover:bg-red-100 rounded-full"><Trash2 class="w-4 h-4" /></button>
+              <p class="font-semibold mr-4">{{ formatCurrency(item.subtotal) }}</p>
+              <button @click="removeFromCart(index)" class="p-1 text-red-500 hover:bg-red-100 rounded-full"><Trash2 class="w-4 h-4" /></button>
             </div>
           </div>
         </div>
@@ -205,7 +232,7 @@ onMounted(fetchData);
           <span>Total:</span>
           <span>{{ formatCurrency(grandTotal) }}</span>
         </div>
-        <button @click="savePurchase" :disabled="cart.length === 0 || loading" class="mt-4 w-full flex justify-center py-3 text-white rounded-lg transition-colors group bg-primary hover:bg-opacity-90 disabled:bg-blue-300">
+        <button @click="savePurchase" :disabled="cart.length === 0 || loading" class="mt-4 w-full flex justify-center py-3 text-white rounded-lg transition-colors group bg-primary hover:bg-opacity-90 disabled:bg-primary/50 disabled:cursor-not-allowed">
           {{ loading ? 'Menyimpan...' : 'Simpan Transaksi Pembelian' }}
         </button>
       </div>
