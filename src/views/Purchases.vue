@@ -31,7 +31,6 @@ const filteredPurchases = computed(() => purchases.value);
 // --- Logika Inti ---
 async function fetchPurchases() {
   loading.value = true;
-  
   const from = (currentPage.value - 1) * itemsPerPage.value;
   const to = from + itemsPerPage.value - 1;
 
@@ -57,7 +56,6 @@ async function fetchPurchases() {
     purchases.value = data;
     totalPurchases.value = count || 0;
   }
-  
   loading.value = false;
 }
 
@@ -88,7 +86,7 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 }
 
-// --- Watchers untuk reaktivitas ---
+// --- Watchers ---
 watch([currentPage, sortOrder, itemsPerPage], fetchPurchases);
 
 watch(searchQuery, () => {
@@ -124,7 +122,7 @@ onMounted(fetchPurchases);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari ID, supplier..." 
+            placeholder="Cari" 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
                    bg-gray-50 
                    focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
@@ -148,29 +146,28 @@ onMounted(fetchPurchases);
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Supplier</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Dibuat Oleh</th>
               <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider border-b">Total</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider border-b">Aksi</th>
-            </tr>
+              </tr>
           </thead>
           <tbody class="bg-white">
-            <tr v-if="loading"><td colspan="6" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
+            <tr v-if="loading"><td colspan="5" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
             <tr v-else-if="filteredPurchases.length === 0">
-              <td colspan="6" class="p-6 text-center text-gray-500 border-t">
+              <td colspan="5" class="p-6 text-center text-gray-500 border-t">
                 <span v-if="searchQuery">Transaksi tidak ditemukan.</span>
                 <span v-else>Tidak ada data pembelian.</span>
               </td>
             </tr>
-            <tr v-for="purchase in filteredPurchases" :key="purchase.id" class="hover:bg-gray-50 transition">
+            <tr 
+              v-for="purchase in filteredPurchases" 
+              :key="purchase.id" 
+              class="hover:bg-gray-100 transition cursor-pointer"
+              @click="openDetailModal(purchase)"
+            >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-t">{{ formatDate(purchase.created_at) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 border-t">{{ purchase.id.substring(0, 8) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-t">{{ purchase.suppliers?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 border-t">{{ purchase.profiles?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 text-right font-semibold border-t">{{ formatCurrency(purchase.total_amount) }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-center border-t">
-                <button @click="openDetailModal(purchase)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition" title="Lihat Detail">
-                  <Eye class="w-5 h-5" />
-                </button>
-              </td>
-            </tr>
+              </tr>
           </tbody>
         </table>
       </div>
@@ -196,6 +193,5 @@ onMounted(fetchPurchases);
       </div>
     </div>
   </div>
-
   <PurchaseDetailModal :isOpen="isDetailModalOpen" :purchaseId="selectedPurchaseId" @close="isDetailModalOpen = false" />
 </template>

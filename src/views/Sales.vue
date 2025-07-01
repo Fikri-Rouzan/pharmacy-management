@@ -119,7 +119,6 @@ onMounted(fetchSales);
           <ArrowDownUp class="w-4 h-4 mr-2" />
           Urutkan: {{ sortOrder === 'desc' ? 'Terbaru' : 'Terlama' }}
         </button>
-        
         <div class="relative w-full md:w-auto flex-grow">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3">
             <Search class="w-5 h-5 text-gray-400" />
@@ -127,14 +126,13 @@ onMounted(fetchSales);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari ID, kasir..." 
+            placeholder="Cari " 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
                    bg-gray-50 
                    focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
                    transition duration-200"
           >
         </div>
-        
         <router-link to="/sales/new" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-opacity-90 transition whitespace-nowrap">
           <Plus class="w-5 h-5 mr-2" />
           Catat Penjualan
@@ -151,28 +149,27 @@ onMounted(fetchSales);
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">ID Transaksi</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Kasir</th>
               <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider border-b">Total</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider border-b">Aksi</th>
-            </tr>
+              </tr>
           </thead>
           <tbody class="bg-white">
-            <tr v-if="loading"><td colspan="5" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
+            <tr v-if="loading"><td colspan="4" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
             <tr v-else-if="filteredSales.length === 0">
-              <td colspan="5" class="p-6 text-center text-gray-500 border-t">
+              <td colspan="4" class="p-6 text-center text-gray-500 border-t">
                 <span v-if="searchQuery">Transaksi tidak ditemukan untuk pencarian "{{ searchQuery }}".</span>
                 <span v-else>Tidak ada data penjualan.</span>
               </td>
             </tr>
-            <tr v-for="sale in filteredSales" :key="sale.id" class="hover:bg-gray-50 transition">
+            <tr 
+              v-for="sale in filteredSales" 
+              :key="sale.id" 
+              class="hover:bg-gray-100 transition cursor-pointer"
+              @click="openDetailModal(sale)"
+            >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-t">{{ formatDate(sale.created_at) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 border-t">{{ sale.id.substring(0, 8) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-t">{{ sale.profiles?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 text-right font-semibold border-t">{{ formatCurrency(sale.total_amount) }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-center border-t">
-                <button @click="openDetailModal(sale)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition" title="Lihat Detail">
-                  <Eye class="w-5 h-5" />
-                </button>
-              </td>
-            </tr>
+              </tr>
           </tbody>
         </table>
       </div>
