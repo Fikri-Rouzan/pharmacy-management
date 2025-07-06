@@ -3,17 +3,19 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { supabase } from '../lib/supabaseClient';
 import Swal from 'sweetalert2';
 import MedicineModal from '../components/MedicineModal.vue';
-import { Plus, Edit, Trash2, Search } from 'lucide-vue-next';
+import MedicineStockDetailModal from '../components/MedicineStockDetailModal.vue';
+import { Plus, Edit, Trash2, Search, Boxes } from 'lucide-vue-next';
 
-// --- State untuk Pagination ---
+// --- State untuk Pagination & Data ---
 const medicines = ref([]);
 const loading = ref(true);
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const totalMedicines = ref(0);
 
-// --- State Lainnya ---
-const isModalOpen = ref(false);
+// --- State untuk Modal & Pencarian ---
+const isFormModalOpen = ref(false);
+const isStockModalOpen = ref(false);
 const selectedMedicine = ref(null);
 const searchQuery = ref('');
 
@@ -42,9 +44,16 @@ async function fetchMedicines() {
   const from = (currentPage.value - 1) * itemsPerPage.value;
   const to = from + itemsPerPage.value - 1;
 
-  const { data, error, count } = await supabase
+  let queryBuilder = supabase
     .from('medicines')
-    .select(`id, name, type, selling_price, stock_quantity, supplier_id, suppliers(name)`, { count: 'exact' })
+    .select(`id, name, type, selling_price, stock_quantity, supplier_id, suppliers(name)`, { count: 'exact' });
+
+  // Jika ada teks pencarian, filter di sisi server
+  if (searchQuery.value) {
+    queryBuilder = queryBuilder.or(`name.ilike.%${searchQuery.value}%,type.ilike.%${searchQuery.value}%`);
+  }
+
+  const { data, error, count } = await queryBuilder
     .order('name', { ascending: true })
     .range(from, to);
 
@@ -71,7 +80,8 @@ function prevPage() {
   }
 }
 
-watch(itemsPerPage, () => {
+// Watcher untuk mereset ke halaman 1 jika item per halaman atau query pencarian berubah
+watch([itemsPerPage, searchQuery], () => {
   currentPage.value = 1;
   fetchMedicines();
 });
@@ -81,12 +91,17 @@ onMounted(fetchMedicines);
 // --- Modal & CRUD Functions ---
 function openAddModal() {
   selectedMedicine.value = null;
-  isModalOpen.value = true;
+  isFormModalOpen.value = true;
 }
 
 function openEditModal(medicine) {
   selectedMedicine.value = medicine;
-  isModalOpen.value = true;
+  isFormModalOpen.value = true;
+}
+
+function openStockDetailModal(medicine) {
+  selectedMedicine.value = medicine;
+  isStockModalOpen.value = true;
 }
 
 async function handleSave(medicineData) {
@@ -104,8 +119,8 @@ async function handleSave(medicineData) {
     Swal.fire('Error', `Gagal menyimpan data: ${error.message}`, 'error');
   } else {
     Swal.fire('Sukses', 'Data obat berhasil disimpan.', 'success');
-    isModalOpen.value = false;
-    fetchMedicines(); 
+    isFormModalOpen.value = false;
+    fetchMedicines();  
   }
 }
 
@@ -148,11 +163,8 @@ async function handleDelete(medicine) {
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari" 
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
-                   bg-gray-50 
-                   focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
-                   transition duration-200"
+            placeholder="Cari..." 
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
           >
         </div>
         <button @click="openAddModal" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-opacity-90 transition whitespace-nowrap">
@@ -165,14 +177,14 @@ async function handleDelete(medicine) {
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
-          <thead class="bg-secondary">
+          <thead class="bg-gray-100">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Nama Obat</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Tipe</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Stok</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Harga Jual</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Pemasok</th>
-              <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider border-b">Aksi</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Nama Obat</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Tipe</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Total Stok</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Harga Jual</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Pemasok</th>
+              <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Aksi</th>
             </tr>
           </thead>
           <tbody class="bg-white">
@@ -181,11 +193,16 @@ async function handleDelete(medicine) {
             </tr>
             <tr v-else-if="filteredMedicines.length === 0">
               <td colspan="6" class="p-6 text-center text-gray-500 border-t">
-                <span v-if="searchQuery">Obat tidak ditemukan di halaman ini.</span>
+                <span v-if="searchQuery">Obat tidak ditemukan.</span>
                 <span v-else>Tidak ada data obat.</span>
               </td>
             </tr>
-            <tr v-for="medicine in filteredMedicines" :key="medicine.id" class="hover:bg-gray-50 transition">
+            <tr 
+              v-for="medicine in filteredMedicines" 
+              :key="medicine.id" 
+              @click="openStockDetailModal(medicine)"
+              class="hover:bg-gray-50 transition cursor-pointer"
+            >
               <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 border-t">{{ medicine.name }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t">{{ medicine.type }}</td>
               <td class="px-6 py-4 whitespace-nowrap border-t">
@@ -199,61 +216,45 @@ async function handleDelete(medicine) {
               <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t">{{ medicine.suppliers?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-t">
                 <div class="flex justify-end items-center space-x-1">
-                  <button @click="openEditModal(medicine)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition"><Edit class="w-4 h-4" /></button>
-                  <button @click="handleDelete(medicine)" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition"><Trash2 class="w-4 h-4" /></button>
+                  <button @click.stop="openStockDetailModal(medicine)" class="p-2 text-teal-600 hover:bg-teal-100 rounded-full transition" title="Lihat Detail Stok & ED">
+                    <Boxes class="w-4 h-4" />
+                  </button>
+                  <button @click.stop="openEditModal(medicine)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition" title="Edit Obat"><Edit class="w-4 h-4" /></button>
+                  <button @click.stop="handleDelete(medicine)" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition" title="Hapus Obat"><Trash2 class="w-4 h-4" /></button>
                 </div>
               </td>
             </tr>
-          </tbody>
+            </tbody>
         </table>
       </div>
     </div>
     
     <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
-      <div class="flex items-center gap-2">
-        <select
-          v-model.number="itemsPerPage"
-          class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary"
-          :disabled="loading"
-        >
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
-        <span class="text-sm text-gray-600">
-          dari <span class="font-semibold">{{ totalMedicines }}</span> data
-        </span>
-      </div>
-      
-      <div class="flex items-center gap-2">
-        <button
-          @click="prevPage"
-          :disabled="currentPage === 1 || loading"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Sebelumnya
-        </button>
-        
-        <span class="text-sm text-gray-700">
-          Halaman <span class="font-semibold">{{ currentPage }}</span> dari <span class="font-semibold">{{ totalPages }}</span>
-        </span>
-        
-        <button
-          @click="nextPage"
-          :disabled="currentPage === totalPages || loading"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Berikutnya
-        </button>
-      </div>
+       <div class="flex items-center gap-2">
+         <select v-model.number="itemsPerPage" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary" :disabled="loading">
+           <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
+         </select>
+         <span class="text-sm text-gray-600">dari <span class="font-semibold">{{ totalMedicines }}</span> data</span>
+       </div>
+       <div class="flex items-center gap-2">
+         <button @click="prevPage" :disabled="currentPage === 1 || loading" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">Sebelumnya</button>
+         <span class="text-sm text-gray-700">Halaman <span class="font-semibold">{{ currentPage }}</span> dari <span class="font-semibold">{{ totalPages }}</span></span>
+         <button @click="nextPage" :disabled="currentPage === totalPages || loading" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">Berikutnya</button>
+       </div>
     </div>
   </div>
 
   <MedicineModal 
-    :isOpen="isModalOpen" 
+    :isOpen="isFormModalOpen" 
     :medicineData="selectedMedicine" 
-    @close="isModalOpen = false" 
+    @close="isFormModalOpen = false" 
     @save="handleSave"
+  />
+  
+  <MedicineStockDetailModal 
+    :isOpen="isStockModalOpen" 
+    :medicineId="selectedMedicine?.id"
+    :medicineName="selectedMedicine?.name"
+    @close="isStockModalOpen = false" 
   />
 </template>

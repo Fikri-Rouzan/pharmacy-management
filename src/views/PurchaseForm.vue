@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '../lib/supabaseClient'; // Pastikan path ini benar
+import { supabase } from '../lib/supabaseClient';
 import Swal from 'sweetalert2';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
-import SearchableSelect from '../components/SearchableSelect.vue'; // Pastikan path ini benar
+import SearchableSelect from '../components/SearchableSelect.vue';
 
 const router = useRouter();
 const loading = ref(false);
@@ -16,6 +16,7 @@ const selectedSupplierId = ref(null);
 const selectedMedicineId = ref(null);
 const quantity = ref(1);
 const purchasePrice = ref(0);
+const expiryDate = ref(''); // <-- State baru untuk tanggal kedaluwarsa
 const cart = ref([]);
 
 // --- Computed Properties ---
@@ -28,28 +29,25 @@ const grandTotal = computed(() => {
   return cart.value.reduce((total, item) => total + item.subtotal, 0);
 });
 
-// --- Watchers (Logika Reaktif) ---
-
-// Mengawasi perubahan pilihan obat untuk otomatis mengisi harga
+// --- Watchers ---
 watch(selectedMedicineId, (newMedicineId) => {
   if (newMedicineId) {
     const selected = allMedicines.value.find(m => m.id === newMedicineId);
     if (selected) {
       purchasePrice.value = selected.purchase_price || 0;
     }
+  } else {
+    purchasePrice.value = 0;
   }
 });
 
-// Saat supplier diganti, reset pilihan obat dan harga
 watch(selectedSupplierId, () => {
     selectedMedicineId.value = null;
     purchasePrice.value = 0;
+    expiryDate.value = '';
 });
 
-
 // --- Methods ---
-
-// Mengambil data awal saat halaman dimuat
 async function fetchData() {
   const { data: supplierData } = await supabase.from('suppliers').select('id, name').order('name');
   suppliers.value = supplierData || [];
@@ -61,8 +59,9 @@ async function fetchData() {
 const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
 
 function addToCart() {
-  if (!selectedMedicineId.value || quantity.value <= 0 || purchasePrice.value <= 0) {
-    Swal.fire('Info', 'Pilih obat, lalu isi jumlah dan harga beli yang valid.', 'info');
+  // Validasi sekarang termasuk tanggal kedaluwarsa
+  if (!selectedMedicineId.value || quantity.value <= 0 || purchasePrice.value <= 0 || !expiryDate.value) {
+    Swal.fire('Info', 'Pilih obat, lalu isi harga, jumlah, dan tanggal kedaluwarsa.', 'info');
     return;
   }
   const selected = allMedicines.value.find(m => m.id === selectedMedicineId.value);
@@ -71,18 +70,20 @@ function addToCart() {
     name: selected.name,
     quantity: quantity.value,
     purchase_price: purchasePrice.value,
+    expiry_date: expiryDate.value, // <-- Menyimpan tanggal kedaluwarsa ke keranjang
     subtotal: purchasePrice.value * quantity.value
   });
+  // Reset semua input setelah ditambahkan
   selectedMedicineId.value = null;
   quantity.value = 1;
   purchasePrice.value = 0;
+  expiryDate.value = '';
 }
 
 function removeFromCart(index) {
   cart.value.splice(index, 1);
 }
 
-// FUNGSI INI SUDAH DISESUAIKAN DENGAN LOGIKA UPDATE STOK & HARGA
 async function savePurchase() {
   if (cart.value.length === 0 || !selectedSupplierId.value) {
     Swal.fire('Data Tidak Lengkap', 'Pilih supplier dan tambahkan setidaknya satu obat.', 'warning');
@@ -90,57 +91,29 @@ async function savePurchase() {
   }
   loading.value = true;
   try {
-    // Langkah 1: Ambil data user
     const { data: { user } } = await supabase.auth.getUser();
-
-    // Langkah 2: Simpan data utama pembelian
     const { data: purchaseData, error: purchaseError } = await supabase.from('purchases').insert({
       employee_id: user.id,
       supplier_id: selectedSupplierId.value,
       total_amount: grandTotal.value
     }).select('id').single();
-    
     if (purchaseError) throw purchaseError;
     
     const purchaseId = purchaseData.id;
-
-    // Langkah 3: Siapkan dan simpan item-item detail pembelian
+    // Pastikan expiry_date ikut tersimpan
     const itemsToInsert = cart.value.map(item => ({
       purchase_id: purchaseId,
       medicine_id: item.medicine_id,
       quantity: item.quantity,
-      purchase_price: item.purchase_price
+      purchase_price: item.purchase_price,
+      expiry_date: item.expiry_date // <-- Mengirim tanggal kedaluwarsa ke database
     }));
 
     const { error: itemsError } = await supabase.from('purchase_items').insert(itemsToInsert);
     if (itemsError) throw itemsError;
 
-    // LANGKAH 4: UPDATE STOK DAN HARGA BELI MASTER SETELAH TRANSAKSI SUKSES
-    for (const item of cart.value) {
-      // 4a. Update harga beli terakhir di tabel 'medicines'
-      const { error: updatePriceError } = await supabase
-        .from('medicines')
-        .update({ purchase_price: item.purchase_price })
-        .eq('id', item.medicine_id);
-
-      if (updatePriceError) {
-        console.warn(`Gagal update harga master untuk obat ID ${item.medicine_id}:`, updatePriceError);
-      }
-      
-      // 4b. Tambah stok di tabel 'medicines' menggunakan RPC
-      const { error: updateStockError } = await supabase.rpc('increment_stock', {
-        medicine_id_input: item.medicine_id,
-        quantity_input: item.quantity
-      });
-
-      if (updateStockError) {
-        console.warn(`Gagal update stok untuk obat ID ${item.medicine_id}:`, updateStockError);
-      }
-    }
-
-    Swal.fire('Sukses!', 'Transaksi pembelian berhasil disimpan. Stok dan harga telah diperbarui.', 'success');
+    Swal.fire('Sukses!', 'Transaksi pembelian berhasil disimpan.', 'success');
     router.push('/purchases');
-
   } catch (error) {
     console.error('Error saving purchase:', error);
     Swal.fire('Error', `Gagal menyimpan transaksi: ${error.message}`, 'error');
@@ -182,7 +155,7 @@ onMounted(fetchData);
           <hr/>
           <div>
             <h3 class="text-lg font-semibold">Tambah Item Obat</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end mt-4">
               <div class="md:col-span-2">
                 <label for="medicine" class="block text-sm font-medium text-gray-700">Pilih Obat</label>
                 <SearchableSelect
@@ -198,11 +171,15 @@ onMounted(fetchData);
                 <input v-model.number="purchasePrice" type="number" id="purchasePrice" min="0" placeholder="Otomatis" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
               </div>
               <div>
+                <label for="expiryDate" class="block text-sm font-medium text-gray-700">Tgl. ED</label>
+                <input v-model="expiryDate" type="date" id="expiryDate" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+              </div>
+              <div>
                 <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
                 <input v-model.number="quantity" type="number" id="quantity" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
               </div>
             </div>
-            <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-blue-100 text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
+            <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-secondary text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
               <Plus class="w-5 h-5 mr-2" />
               Tambah ke Daftar Pembelian
             </button>
@@ -220,10 +197,11 @@ onMounted(fetchData);
             <div>
               <p class="font-semibold">{{ item.name }}</p>
               <p class="text-sm text-gray-500">{{ item.quantity }} x {{ formatCurrency(item.purchase_price) }}</p>
+              <p class="text-xs text-red-600 font-semibold">ED: {{ item.expiry_date }}</p>
             </div>
             <div class="flex items-center">
-              <p class="font-semibold mr-4">{{ formatCurrency(item.subtotal) }}</p>
-              <button @click="removeFromCart(index)" class="p-1 text-red-500 hover:bg-red-100 rounded-full"><Trash2 class="w-4 h-4" /></button>
+               <p class="font-semibold mr-4">{{ formatCurrency(item.subtotal) }}</p>
+               <button @click="removeFromCart(index)" class="p-1 text-red-500 hover:bg-red-100 rounded-full"><Trash2 class="w-4 h-4" /></button>
             </div>
           </div>
         </div>
