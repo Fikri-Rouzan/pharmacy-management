@@ -38,7 +38,7 @@ const handleLogin = async () => {
   } catch (error) {
     Swal.fire({
       icon: "error",
-      title: "Login Gagal",
+      title: "Masuk Gagal",
       text: error.message,
       confirmButtonColor: '#4a86c5'
     });
@@ -59,7 +59,7 @@ const handleLogin = async () => {
           Selamat Datang
         </h2>
         <p class="mt-2 text-gray-500">
-          Login untuk mengakses sistem inventaris
+          Masuk untuk mengakses sistem inventaris
         </p>
       </div>
 
@@ -106,7 +106,7 @@ const handleLogin = async () => {
             :disabled="loading"
             class="w-full flex justify-center py-3 text-white rounded-lg transition-all duration-300 ease-in-out group bg-primary hover:bg-opacity-90 disabled:bg-blue-300"
           >
-            {{ loading ? "Masuk..." : "Login" }}
+            {{ loading ? "Masuk..." : "Masuk" }}
             <ArrowRight class="w-5 h-5 ml-2 transition-transform transform group-hover:translate-x-1" />
           </button>
         </div>

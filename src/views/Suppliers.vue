@@ -100,7 +100,7 @@ async function handleSave(supplierData) {
   }
   if (error) Swal.fire('Error', `Gagal menyimpan data: ${error.message}`, 'error');
   else {
-    Swal.fire('Sukses', 'Data supplier berhasil disimpan.', 'success');
+    Swal.fire('Sukses', 'Data pemasok berhasil disimpan.', 'success');
     isFormModalOpen.value = false;
     fetchSuppliers();
   }
@@ -119,7 +119,7 @@ async function handleDelete(supplier) {
     const { error } = await supabase.from('suppliers').update({ status: 'inactive' }).eq('id', supplier.id);
     if (error) Swal.fire('Error', `Gagal menonaktifkan data: ${error.message}`, 'error');
     else {
-      Swal.fire('Berhasil!', 'Data supplier telah dinonaktifkan.', 'success');
+      Swal.fire('Berhasil!', 'Data pemasok telah dinonaktifkan.', 'success');
       fetchSuppliers(); 
     }
   }
@@ -143,8 +143,8 @@ onMounted(fetchSuppliers);
   <div class="container mx-auto p-4 md:p-6">
     <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
       <div>
-        <h1 class="text-3xl font-bold text-gray-800">Data Supplier</h1>
-        <p class="mt-1 text-sm text-gray-500">Kelola semua daftar supplier atau pemasok obat yang aktif.</p>
+        <h1 class="text-3xl font-bold text-gray-800">Data Pemasok</h1>
+        <p class="mt-1 text-sm text-gray-500">Kelola semua daftar pemasok obat yang aktif.</p>
       </div>
       <div class="flex items-center gap-2 w-full md:w-auto flex-wrap">
          <button 
@@ -159,7 +159,7 @@ onMounted(fetchSuppliers);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari nama, email..." 
+            placeholder="Cari " 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
                    bg-gray-50 
                    focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
@@ -168,7 +168,7 @@ onMounted(fetchSuppliers);
         </div>
         <button @click="openAddModal" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-opacity-90 transition whitespace-nowrap">
           <Plus class="w-5 h-5 mr-2" />
-          Tambah Supplier
+          Tambah Pemasok
         </button>
         <router-link to="/suppliers/inactive" class="p-2 text-gray-600 bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 transition" title="Lihat Arsip Supplier">
           <Archive class="w-5 h-5" />
@@ -181,7 +181,7 @@ onMounted(fetchSuppliers);
         <table class="w-full border-collapse table-fixed">
           <thead class="bg-secondary">
             <tr>
-              <th class="w-[25%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Nama Supplier</th>
+              <th class="w-[25%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Nama Pemasok</th>
               <th class="w-[25%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Email</th>
               <th class="w-[15%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">No. Telepon</th>
               <th class="w-[20%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Alamat</th>
@@ -192,8 +192,8 @@ onMounted(fetchSuppliers);
             <tr v-if="loading"><td colspan="5" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
             <tr v-else-if="filteredSuppliers.length === 0">
               <td colspan="5" class="p-6 text-center text-gray-500 border-t">
-                <span v-if="searchQuery">Supplier tidak ditemukan.</span>
-                <span v-else>Tidak ada data supplier aktif.</span>
+                <span v-if="searchQuery">Pemasok tidak ditemukan.</span>
+                <span v-else>Tidak ada data pemasok aktif.</span>
               </td>
             </tr>
             <tr 

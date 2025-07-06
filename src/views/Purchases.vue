@@ -97,7 +97,7 @@ onMounted(fetchPurchases);
     <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
       <div>
         <h1 class="text-3xl font-bold text-gray-800">Data Pembelian</h1>
-        <p class="mt-1 text-sm text-gray-500">Lihat semua riwayat transaksi pembelian dari supplier.</p>
+        <p class="mt-1 text-sm text-gray-500">Lihat semua riwayat transaksi pembelian dari pemasok.</p>
       </div>
       <div class="flex items-center gap-2 w-full md:w-auto flex-wrap">
         <button 
@@ -114,7 +114,7 @@ onMounted(fetchPurchases);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari ID, supplier..." 
+            placeholder="Cari " 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
                    bg-gray-50 
                    focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
@@ -135,7 +135,7 @@ onMounted(fetchPurchases);
             <tr>
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Tanggal Transaksi</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">ID Transaksi</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Supplier</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Pemasok</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Dibuat Oleh</th>
               <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider border-b">Total</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider border-b">Aksi</th>

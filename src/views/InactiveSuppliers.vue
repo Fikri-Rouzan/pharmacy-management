@@ -49,7 +49,7 @@ async function handleReactivate(supplier) {
     if (error) {
       Swal.fire('Error', `Gagal mengaktifkan data: ${error.message}`, 'error');
     } else {
-      Swal.fire('Berhasil!', 'Supplier telah diaktifkan kembali.', 'success');
+      Swal.fire('Berhasil!', 'Pemasok telah diaktifkan kembali.', 'success');
       // Panggil ulang fungsi fetch agar daftar di halaman ini ter-update
       fetchInactiveSuppliers(); 
     }
@@ -66,8 +66,8 @@ onMounted(fetchInactiveSuppliers);
         <ArrowLeft class="w-6 h-6 text-gray-700" />
       </button>
       <div>
-        <h1 class="text-3xl font-bold text-gray-800">Arsip Supplier</h1>
-        <p class="mt-1 text-sm text-gray-500">Daftar supplier yang telah dinonaktifkan.</p>
+        <h1 class="text-3xl font-bold text-gray-800">Arsip Pemasok</h1>
+        <p class="mt-1 text-sm text-gray-500">Daftar pemasok yang telah dinonaktifkan.</p>
       </div>
     </div>
 
@@ -75,7 +75,7 @@ onMounted(fetchInactiveSuppliers);
       <div class="overflow-x-auto">
         <table class="w-full border-collapse table-fixed">
           <thead class="bg-secondary"> <tr>
-              <th class="w-[30%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Nama Supplier</th>
+              <th class="w-[30%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Nama Pemasok</th>
               <th class="w-[30%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
               <th class="w-[20%] px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">No. Telepon</th>
               <th class="w-[20%] px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">Aksi</th>
@@ -84,7 +84,7 @@ onMounted(fetchInactiveSuppliers);
           <tbody class="bg-white">
             <tr v-if="loading"><td colspan="4" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
             <tr v-else-if="inactiveSuppliers.length === 0">
-              <td colspan="4" class="p-6 text-center text-gray-500 border-t">Tidak ada supplier yang diarsipkan.</td>
+              <td colspan="4" class="p-6 text-center text-gray-500 border-t">Tidak ada pemasok yang diarsipkan.</td>
             </tr>
             <tr v-for="supplier in inactiveSuppliers" :key="supplier.id" class="hover:bg-gray-50 transition">
               <td class="px-6 py-4 font-medium text-gray-800 border-t truncate" :title="supplier.name">{{ supplier.name }}</td>

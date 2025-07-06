@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview",
+  "db:seed": "node ./scripts/seed.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",

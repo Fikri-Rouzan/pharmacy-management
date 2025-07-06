@@ -70,7 +70,7 @@ onMounted(fetchSummaryData);
         class="block p-6 rounded-xl transition-all duration-300 transform hover:-translate-y-2 shadow-lg bg-violet-100 hover:shadow-violet-200/50"
       >
         <Truck class="w-10 h-10 mb-4 text-violet-600"/>
-        <p class="text-base font-semibold text-slate-600">Total Supplier Aktif</p>
+        <p class="text-base font-semibold text-slate-600">Total Pemasok Aktif</p>
         <p class="text-4xl font-bold text-slate-800">{{ supplierCount }}</p>
       </router-link>
 

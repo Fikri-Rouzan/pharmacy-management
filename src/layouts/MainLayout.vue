@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import Sidebar from '../components/Sidebar.vue'; // Pastikan path ini benar
+import Sidebar from '../components/Sidebar.vue';
 import { Menu, LogOut, UserCircle2 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import { supabase } from '../lib/supabaseClient';
@@ -15,7 +15,6 @@ const userMenu = ref(null);
 
 const primaryColor = '#1976D2';
 
-// FUNGSI KONTROL SIDEBAR (Sesuai standar yang benar)
 const openSidebar = () => { isSidebarOpen.value = true; };
 const closeSidebar = () => { isSidebarOpen.value = false; };
 
@@ -29,8 +28,8 @@ const closeProfileMenuOnClickOutside = (event) => {
   }
 };
 
+// Fungsi handleLogout tetap di sini, tidak berubah
 const handleLogout = async () => {
-  // ... (Logika handleLogout tetap sama, tidak perlu diubah)
   isProfileMenuOpen.value = false;
   Swal.fire({
     title: 'Apakah Anda yakin?',
@@ -63,7 +62,6 @@ const handleLogout = async () => {
 };
 
 onMounted(async () => {
-  // ... (Logika onMounted tetap sama, tidak perlu diubah)
   document.addEventListener('click', closeProfileMenuOnClickOutside);
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
@@ -99,7 +97,7 @@ onUnmounted(() => {
 
 <template>
   <div class="flex h-screen bg-gray-100 font-sans">
-    <Sidebar :isOpen="isSidebarOpen" @close="closeSidebar" />
+    <Sidebar :isOpen="isSidebarOpen" @close="closeSidebar" @logout="handleLogout" />
 
     <div class="flex-1 flex flex-col overflow-hidden">
       <header class="flex items-center justify-between px-6 bg-white shadow-sm h-16 flex-shrink-0">
@@ -107,7 +105,7 @@ onUnmounted(() => {
           <button @click="openSidebar" class="text-gray-600 focus:outline-none md:hidden">
             <Menu class="w-6 h-6"/>
           </button>
-          <h1 class="text-lg font-semibold text-gray-800 ml-4 md:ml-0">Admin Dashboard</h1>
+          <h1 class="text-lg font-semibold text-gray-800 ml-4 md:ml-0">INVENTARIS APOTEK</h1>
         </div>
         
         <div class="relative" ref="userMenu">
@@ -115,24 +113,20 @@ onUnmounted(() => {
             <span class="mr-3 text-sm font-medium text-gray-700 hidden md:block group-hover:text-primary transition-colors">{{ userName }}</span>
             <UserCircle2 class="w-9 h-9 text-gray-500 group-hover:text-primary transition-colors" />
           </button>
-           <transition
-            enter-active-class="transition ease-out duration-100"
-            enter-from-class="transform opacity-0 scale-95"
-            enter-to-class="transform opacity-100 scale-100"
-            leave-active-class="transition ease-in duration-75"
-            leave-from-class="transform opacity-100 scale-100"
-            leave-to-class="transform opacity-0 scale-95"
-          >
+            <transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
             <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-20">
               <router-link to="/profile" @click="isProfileMenuOpen = false" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 <UserCircle2 class="w-5 h-5 mr-3" />
                 Profil Saya
               </router-link>
-              <button @click="handleLogout" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                <LogOut class="w-5 h-5 mr-3" />
-                Keluar
-              </button>
-            </div>
+              </div>
           </transition>
         </div>
       </header>

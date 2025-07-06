@@ -156,7 +156,7 @@ onMounted(fetchData);
       </button>
       <div>
         <h1 class="text-3xl font-bold text-gray-800">Catat Pembelian Baru</h1>
-        <p class="mt-1 text-sm text-gray-500">Catat obat yang masuk dari supplier.</p>
+        <p class="mt-1 text-sm text-gray-500">Catat obat yang masuk dari pemasok.</p>
       </div>
     </div>
     
@@ -171,7 +171,7 @@ onMounted(fetchData);
             <SearchableSelect
               v-model="selectedSupplierId"
               :options="suppliers"
-              placeholder="-- Cari & pilih supplier --"
+              placeholder="-- Cari & Pilih Pemasok --"
               class="mt-1"
             />
           </div>
@@ -185,7 +185,7 @@ onMounted(fetchData);
                   v-model="selectedMedicineId"
                   :options="filteredMedicines"
                   :disabled="!selectedSupplierId"
-                  placeholder="-- Pilih supplier dulu --"
+                  placeholder="-- Pilih Pemasok  --"
                   class="mt-1"
                 />
               </div>

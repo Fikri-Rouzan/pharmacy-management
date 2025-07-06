@@ -1,8 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router'; // [BARU] Import useRouter
 import { supabase } from '../lib/supabaseClient';
 import Swal from 'sweetalert2';
-import { UploadCloud, Trash2, User, Mail } from 'lucide-vue-next';
+import { UploadCloud, Trash2, User, Mail, ArrowLeft } from 'lucide-vue-next'; // [BARU] Import ArrowLeft
+
+const router = useRouter(); // [BARU] Inisialisasi router
 
 const loading = ref(true);
 const uploading = ref(false);
@@ -113,17 +116,26 @@ onMounted(getProfile);
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 py-8">
+  <div class="container mx-auto p-4 md:p-6">
+    <div class="flex items-center mb-6">
+      <button @click="router.back()" class="p-2 mr-4 rounded-full hover:bg-gray-200 transition" title="Kembali">
+        <ArrowLeft class="w-6 h-6 text-gray-700" />
+      </button>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-800">Profil Saya</h1>
+        <p class="mt-1 text-sm text-gray-500">Lihat informasi akun dan foto profil Anda.</p>
+      </div>
+    </div>
+    
     <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 md:p-8">
       <div class="flex flex-col md:flex-row gap-8">
 
-        <!-- KIRI: Foto + Tombol -->
         <div class="md:w-2/5 w-full flex flex-col items-center">
           <div class="relative w-36 h-36 mb-4">
             <img 
-              :src="avatarUrl || `https://ui-avatars.com/api/?name=${name || userEmail}&background=64B5F6&color=fff&size=144`" 
+              :src="avatarUrl || `https://ui-avatars.com/api/?name=${name || userEmail}&background=1976D2&color=fff&size=144`" 
               alt="Foto Profil" 
-              class="w-full h-full rounded-full object-cover"
+              class="w-full h-full rounded-full object-cover border-2 border-gray-200"
             >
             <div v-if="uploading || loading" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
               <div class="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -131,47 +143,40 @@ onMounted(getProfile);
           </div>
 
       
-          <!-- TOMBOL -->
-          <div class="flex flex-col sm:flex-row gap-4 w-full justify-center mt-9">
-            <!-- Upload -->
+          <div class="flex flex-col sm:flex-row gap-4 w-full justify-center mt-4">
             <label for="file-upload"
-              class="flex-1 px-6 py-2 text-white bg-[#64B5F6] hover:bg-[#1976D2] transition-colors font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-2 text-center">
+              class="flex-1 px-6 py-2 text-white bg-primary hover:bg-opacity-90 transition-colors font-semibold rounded-lg cursor-pointer flex items-center justify-center gap-2 text-center">
               <UploadCloud class="w-5 h-5" />
               <span>Ubah Foto</span>
             </label>
             <input id="file-upload" type="file" class="hidden" @change="uploadAvatar" accept="image/png, image/jpeg" :disabled="uploading" />
 
-            <!-- Hapus -->
             <button @click="deleteAvatar" :disabled="!avatarUrl || uploading"
-              class="flex-1 px-6 py-2 bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white transition-colors font-semibold rounded-xl flex items-center justify-center gap-2 text-center disabled:border-gray-300 disabled:text-gray-400 disabled:bg-white disabled:cursor-not-allowed">
+              class="flex-1 px-6 py-2 bg-white text-red-600 border border-red-600 hover:bg-red-50 transition-colors font-semibold rounded-lg flex items-center justify-center gap-2 text-center disabled:border-gray-300 disabled:text-gray-400 disabled:bg-white disabled:cursor-not-allowed">
               <Trash2 class="w-5 h-5" />
-              <span>Hapus Foto</span>
+              <span>Hapus</span>
             </button>
           </div>
         </div>
 
-        <!-- KANAN: Info Profil -->
         <div class="md:w-3/5 w-full">
-          <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-6">Profil Saya</h3>
+          <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-6">Informasi Akun</h3>
 
-          <!-- Field Profil -->
           <div class="space-y-6">
-            <!-- Nama -->
             <div>
               <label class="text-sm font-medium text-gray-600">Nama Lengkap</label>
-              <div class="mt-1 flex items-center w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-300">
-                <User class="w-5 h-5 text-[#64B5F6]" />
+              <div class="mt-1 flex items-center w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                <User class="w-5 h-5 text-primary" />
                 <span class="ml-3 text-base text-gray-900 font-semibold">
                   {{ name || 'Belum diatur' }}
                 </span>
               </div>
             </div>
 
-            <!-- Email -->
             <div>
               <label class="text-sm font-medium text-gray-600">Alamat Email</label>
-              <div class="mt-1 flex items-center w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-300">
-                <Mail class="w-5 h-5 text-[#64B5F6]" />
+              <div class="mt-1 flex items-center w-full px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <Mail class="w-5 h-5 text-primary" />
                 <span class="ml-3 text-base text-gray-900 font-semibold">
                   {{ userEmail }}
                 </span>

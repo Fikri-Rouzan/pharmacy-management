@@ -3,7 +3,6 @@ import { ref, watch } from 'vue';
 import { supabase } from '../lib/supabaseClient';
 import { X } from 'lucide-vue-next';
 
-// Menerima props dari parent (Medicines.vue)
 const props = defineProps({
   isOpen: Boolean,
   medicineId: String,
@@ -11,24 +10,21 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
-
-// State internal untuk modal ini
 const loading = ref(false);
 const stockBatches = ref([]);
 
-// Fungsi untuk format tanggal
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
+  // Penyesuaian timezone tidak lagi diperlukan jika tipe data benar
   return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-// Fungsi untuk mengambil detail stok dari database
 async function fetchStockDetails(id) {
   if (!id) return;
   loading.value = true;
   stockBatches.value = [];
   try {
-    // Memanggil fungsi 'get_stock_details_by_medicine' yang ada di database
+    // Memanggil fungsi pintar yang baru saja kita buat
     const { data, error } = await supabase.rpc('get_stock_details_by_medicine', {
       medicine_id_input: id
     });
@@ -41,9 +37,6 @@ async function fetchStockDetails(id) {
   }
 }
 
-// Watcher ini adalah kunci utamanya.
-// Ia akan memantau perubahan pada medicineId. Saat modal terbuka dan menerima ID baru,
-// ia akan otomatis memanggil fungsi fetchStockDetails.
 watch(() => props.medicineId, (newId) => {
   if (props.isOpen && newId) {
     fetchStockDetails(newId);

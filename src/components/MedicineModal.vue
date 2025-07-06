@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'; // <-- Tambahkan computed
+import { ref, watch, onMounted, computed } from 'vue';
 import { X } from 'lucide-vue-next';
 import { supabase } from '../lib/supabaseClient';
 import SearchableSelect from './SearchableSelect.vue';
@@ -16,14 +16,11 @@ const form = ref({
   name: '',
   type: '',
   selling_price: 0,
-  stock_quantity: 0,
   supplier_id: null,
 });
 const suppliers = ref([]);
 
-// --- Computed property baru untuk validasi form ---
 const isFormValid = computed(() => {
-  // Tombol simpan akan aktif jika semua kondisi ini terpenuhi
   return form.value.name && 
          form.value.selling_price > 0 && 
          form.value.supplier_id;
@@ -39,16 +36,26 @@ async function fetchSuppliers() {
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     if (props.medicineData) {
+      // Saat edit, kita tetap memuat semua data termasuk stock_quantity (hanya untuk ditampilkan jika perlu)
       form.value = { ...props.medicineData };
     } else {
-      form.value = { id: null, name: '', type: '', selling_price: 0, stock_quantity: 0, supplier_id: null };
+      // Saat tambah baru, reset form
+      form.value = { id: null, name: '', type: '', selling_price: 0, supplier_id: null };
     }
   }
 });
 
 function handleSubmit() {
-  if (!isFormValid.value) return; // Keamanan tambahan
-  emit('save', form.value);
+  if (!isFormValid.value) return;
+
+  let dataToSave = { ...form.value };
+
+  // Jika ini adalah obat BARU (tidak ada ID), paksa stock_quantity menjadi 0
+  if (!dataToSave.id) {
+    dataToSave.stock_quantity = 0;
+  }
+
+  emit('save', dataToSave);
 }
 
 onMounted(fetchSuppliers);
@@ -78,18 +85,13 @@ onMounted(fetchSuppliers);
           <SearchableSelect
             v-model="form.supplier_id"
             :options="suppliers"
-            placeholder="-- Cari & pilih pemasok --"
+            placeholder="-- Cari & Pilih Pemasok --"
             class="mt-1"
           />
         </div>
         <div>
           <label for="selling_price" class="block text-sm font-medium text-gray-700">Harga Jual <span class="text-red-500">*</span></label>
           <input v-model.number="form.selling_price" type="number" id="selling_price" min="1" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-        </div>
-         <div>
-          <label for="stock" class="block text-sm font-medium text-gray-700">Stok Awal</label>
-          <input v-model.number="form.stock_quantity" type="number" id="stock" min="0" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-          <p class="text-xs text-gray-500 mt-1">Stok akan bertambah/berkurang otomatis saat ada transaksi.</p>
         </div>
         
         <div class="pt-4 flex justify-end space-x-3">

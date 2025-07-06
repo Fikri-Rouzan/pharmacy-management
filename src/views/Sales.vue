@@ -79,7 +79,7 @@ onMounted(fetchSales);
         </button>
         <div class="relative w-full md:w-auto flex-grow">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3"><Search class="w-5 h-5 text-gray-400" /></span>
-          <input v-model="searchQuery" type="text" placeholder="Cari ID atau Kasir..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition duration-200">
+          <input v-model="searchQuery" type="text" placeholder="Cari" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition duration-200">
         </div>
         <router-link to="/sales/new" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-opacity-90 transition whitespace-nowrap">
           <Plus class="w-5 h-5 mr-2" />

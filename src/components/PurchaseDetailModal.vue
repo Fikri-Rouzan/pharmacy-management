@@ -76,7 +76,7 @@ watch(() => props.purchaseId, (newId) => {
                 <thead class="bg-gray-50 sticky top-0">
                   <tr>
                     <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Nama Obat</th>
-                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Tgl. ED</th>
+                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Tgl. Kedaluwarsa</th>
                     <th class="px-4 py-2 text-right text-xs font-bold text-gray-600 uppercase">Harga Beli</th>
                     <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase">Jumlah</th>
                     <th class="px-4 py-2 text-right text-xs font-bold text-gray-600 uppercase">Subtotal</th>
