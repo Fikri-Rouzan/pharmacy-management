@@ -18,6 +18,7 @@ const isFormModalOpen = ref(false);
 const isStockModalOpen = ref(false);
 const selectedMedicine = ref(null);
 const searchQuery = ref('');
+const searchDebounceTimer = ref(null);
 
 // --- Computed Properties ---
 const totalPages = computed(() => {
@@ -25,18 +26,8 @@ const totalPages = computed(() => {
   return Math.ceil(totalMedicines.value / itemsPerPage.value);
 });
 
-const filteredMedicines = computed(() => {
-  if (!searchQuery.value) {
-    return medicines.value;
-  }
-  const query = searchQuery.value.toLowerCase();
-  return medicines.value.filter(medicine => {
-    const nameMatch = medicine.name.toLowerCase().includes(query);
-    const typeMatch = medicine.type ? medicine.type.toLowerCase().includes(query) : false;
-    const supplierMatch = medicine.suppliers ? medicine.suppliers.name.toLowerCase().includes(query) : false;
-    return nameMatch || typeMatch || supplierMatch;
-  });
-});
+// Computed property ini hanya meneruskan data karena filter & sort sudah di sisi server
+const filteredMedicines = computed(() => medicines.value);
 
 // --- Data Fetching & Logic ---
 async function fetchMedicines() {
@@ -44,16 +35,18 @@ async function fetchMedicines() {
   const from = (currentPage.value - 1) * itemsPerPage.value;
   const to = from + itemsPerPage.value - 1;
 
-  let queryBuilder = supabase
+  let query = supabase
     .from('medicines')
     .select(`id, name, type, selling_price, stock_quantity, supplier_id, suppliers(name)`, { count: 'exact' });
 
   // Jika ada teks pencarian, filter di sisi server
   if (searchQuery.value) {
-    queryBuilder = queryBuilder.or(`name.ilike.%${searchQuery.value}%,type.ilike.%${searchQuery.value}%`);
+    const q = `%${searchQuery.value}%`;
+    // Mencari di kolom nama, tipe, dan nama supplier terkait
+    query = query.or(`name.ilike.${q},type.ilike.${q},suppliers.name.ilike.${q}`);
   }
 
-  const { data, error, count } = await queryBuilder
+  const { data, error, count } = await query
     .order('name', { ascending: true })
     .range(from, to);
 
@@ -69,22 +62,32 @@ async function fetchMedicines() {
 function nextPage() {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
-    fetchMedicines();
   }
 }
 
 function prevPage() {
   if (currentPage.value > 1) {
     currentPage.value--;
-    fetchMedicines();
   }
 }
 
-// Watcher untuk mereset ke halaman 1 jika item per halaman atau query pencarian berubah
-watch([itemsPerPage, searchQuery], () => {
+// Watcher untuk mereset ke halaman 1 jika item per halaman berubah
+watch(itemsPerPage, () => {
   currentPage.value = 1;
   fetchMedicines();
 });
+
+// Watcher untuk pencarian dengan debounce
+watch(searchQuery, () => {
+  clearTimeout(searchDebounceTimer.value);
+  searchDebounceTimer.value = setTimeout(() => {
+    currentPage.value = 1; // Selalu kembali ke halaman 1 saat melakukan pencarian baru
+    fetchMedicines();
+  }, 300); // Tunggu 300ms setelah user berhenti mengetik
+});
+
+// Watcher untuk pindah halaman
+watch(currentPage, fetchMedicines);
 
 onMounted(fetchMedicines);
 
@@ -163,7 +166,7 @@ async function handleDelete(medicine) {
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari..." 
+            placeholder="Cari obat, tipe, supplier..." 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
           >
         </div>
@@ -177,28 +180,28 @@ async function handleDelete(medicine) {
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
-          <thead class="bg-gray-100">
+          <thead class="bg-secondary">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Nama Obat</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Tipe</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Total Stok</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Harga Jual</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Pemasok</th>
-              <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b">Aksi</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Nama Obat</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Tipe</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Total Stok</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Harga Jual</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Pemasok</th>
+              <th class="px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-wider">Aksi</th>
             </tr>
           </thead>
           <tbody class="bg-white">
             <tr v-if="loading">
               <td colspan="6" class="p-6 text-center text-gray-500 border-t">Memuat data...</td>
             </tr>
-            <tr v-else-if="filteredMedicines.length === 0">
+            <tr v-else-if="medicines.length === 0">
               <td colspan="6" class="p-6 text-center text-gray-500 border-t">
                 <span v-if="searchQuery">Obat tidak ditemukan.</span>
                 <span v-else>Tidak ada data obat.</span>
               </td>
             </tr>
             <tr 
-              v-for="medicine in filteredMedicines" 
+              v-for="medicine in medicines" 
               :key="medicine.id" 
               @click="openStockDetailModal(medicine)"
               class="hover:bg-gray-50 transition cursor-pointer"
@@ -216,15 +219,13 @@ async function handleDelete(medicine) {
               <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t">{{ medicine.suppliers?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-t">
                 <div class="flex justify-end items-center space-x-1">
-                  <button @click.stop="openStockDetailModal(medicine)" class="p-2 text-teal-600 hover:bg-teal-100 rounded-full transition" title="Lihat Detail Stok & ED">
-                    <Boxes class="w-4 h-4" />
-                  </button>
+                  <button @click.stop="openStockDetailModal(medicine)" class="p-2 text-teal-600 hover:bg-teal-100 rounded-full transition" title="Lihat Detail Stok & ED"><Boxes class="w-4 h-4" /></button>
                   <button @click.stop="openEditModal(medicine)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition" title="Edit Obat"><Edit class="w-4 h-4" /></button>
                   <button @click.stop="handleDelete(medicine)" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition" title="Hapus Obat"><Trash2 class="w-4 h-4" /></button>
                 </div>
               </td>
             </tr>
-            </tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -244,17 +245,6 @@ async function handleDelete(medicine) {
     </div>
   </div>
 
-  <MedicineModal 
-    :isOpen="isFormModalOpen" 
-    :medicineData="selectedMedicine" 
-    @close="isFormModalOpen = false" 
-    @save="handleSave"
-  />
-  
-  <MedicineStockDetailModal 
-    :isOpen="isStockModalOpen" 
-    :medicineId="selectedMedicine?.id"
-    :medicineName="selectedMedicine?.name"
-    @close="isStockModalOpen = false" 
-  />
+  <MedicineModal :isOpen="isFormModalOpen" :medicineData="selectedMedicine" @close="isFormModalOpen = false" @save="handleSave" />
+  <MedicineStockDetailModal :isOpen="isStockModalOpen" :medicineId="selectedMedicine?.id" :medicineName="selectedMedicine?.name" @close="isStockModalOpen = false" />
 </template>

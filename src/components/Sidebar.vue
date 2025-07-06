@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutDashboard, Pill, ShoppingCart, Archive, Truck, X } from 'lucide-vue-next';
+import { LayoutDashboard, Pill, ShoppingCart, Archive, Truck, X, HelpCircle } from 'lucide-vue-next'; // <-- Tambahkan HelpCircle
 
 const emit = defineEmits(['close']);
 defineProps({ isOpen: Boolean });
@@ -13,6 +13,7 @@ const closeSidebar = () => {
   <div :class="isOpen ? 'fixed inset-0 z-40' : ''">
     <div v-if="isOpen" @click="closeSidebar" class="absolute inset-0 bg-black opacity-50 transition-opacity md:hidden"></div>
     <aside :class="isOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out flex flex-col h-full md:relative md:translate-x-0">
+      
       <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
         <router-link to="/dashboard" @click="closeSidebar" class="flex items-center focus:outline-none">
           <img src="/logo.png" alt="Logo" class="w-9 h-9">
@@ -49,6 +50,14 @@ const closeSidebar = () => {
           <span class="ml-4">Data Supplier</span>
         </router-link>
       </nav>
+      
+      <div class="px-4 py-4 border-t border-gray-200">
+        <router-link to="/guide" @click="closeSidebar" class="flex items-center p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors">
+          <HelpCircle class="w-6 h-6"/>
+          <span class="ml-4">Panduan</span>
+        </router-link>
+      </div>
+
     </aside>
   </div>
 </template>
@@ -60,24 +69,20 @@ const closeSidebar = () => {
   padding: 0.75rem 1rem;
   margin-top: 0.5rem;
   border-radius: 0.5rem;
-  color: #6b7280;
+  color: #4B5563; /* text-gray-600 */
   transition: all 0.2s;
 }
 
-/* Styling hover untuk link yang tidak aktif (Warna Sekunder) */
-.nav-link:not(.router-link-exact-active):hover {
-  background-color: #64B5F6;
-  color: white;
+.nav-link:hover {
+  background-color: #8ab8f3; /* Warna secondary */
+  color: #4a86c5; /* Warna primary */
 }
 
-/* --- INI PERBAIKANNYA --- */
-/* Styling untuk link yang aktif (Warna Primer) hanya untuk .nav-link */
 .nav-link.router-link-exact-active {
-  background-color: #1976D2;
+  background-color: #4a86c5; /* Warna primary */
   color: white;
   font-weight: 600;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  pointer-events: none;
 }
 
 nav .nav-link:first-child {

@@ -13,7 +13,8 @@ import SaleForm from '../views/SaleForm.vue';
 import Purchases from '../views/Purchases.vue';
 import PurchaseForm from '../views/PurchaseForm.vue';
 import Suppliers from '../views/Suppliers.vue';
-import InactiveSuppliers from '../views/InactiveSuppliers.vue'; // <-- 1. TAMBAHKAN IMPORT INI
+import InactiveSuppliers from '../views/InactiveSuppliers.vue'; 
+import Guide from '../views/Guide.vue';
 
 const routes = [
   { path: '/login', name: 'Login', component: Login },
@@ -31,8 +32,10 @@ const routes = [
       { path: 'purchases', name: 'Purchases', component: Purchases },
       { path: 'purchases/new', name: 'PurchaseForm', component: PurchaseForm },
       { path: 'suppliers', name: 'Suppliers', component: Suppliers },
-      // <-- 2. TAMBAHKAN OBJEK RUTE BARU DI SINI
       { path: 'suppliers/inactive', name: 'InactiveSuppliers', component: InactiveSuppliers },
+
+      // --- TAMBAHKAN RUTE BARU DI SINI ---
+      { path: 'guide', name: 'Guide', component: Guide },
     ]
   }
 ];

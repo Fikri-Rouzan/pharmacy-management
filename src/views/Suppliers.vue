@@ -159,7 +159,7 @@ onMounted(fetchSuppliers);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari " 
+            placeholder="Cari nama, email..." 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
                    bg-gray-50 
                    focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
@@ -208,6 +208,7 @@ onMounted(fetchSuppliers);
               <td class="px-6 py-4 text-gray-600 border-t truncate" :title="supplier.address">{{ supplier.address || 'N/A' }}</td>
               <td class="px-6 py-4 text-center text-sm font-medium border-t">
                 <div class="flex justify-center items-center space-x-1">
+                  <button @click.stop="openDetailModal(supplier)" class="p-2 text-green-600 hover:bg-green-100 rounded-full transition" title="Lihat Detail"><Eye class="w-5 h-5" /></button>
                   <button @click.stop="openEditModal(supplier)" class="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition" title="Edit Supplier"><Edit class="w-5 h-5" /></button>
                   <button @click.stop="handleDelete(supplier)" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition" title="Nonaktifkan Supplier"><Trash2 class="w-5 h-5" /></button>
                 </div>

@@ -1,26 +1,21 @@
 <script setup>
+// Bagian script ini sudah benar dan tidak ada perubahan dari kode yang Anda berikan.
 import { ref, onMounted, computed, watch } from 'vue';
 import { supabase } from '../lib/supabaseClient';
 import { Plus, Eye, Search, ArrowDownUp } from 'lucide-vue-next';
 import PurchaseDetailModal from '../components/PurchaseDetailModal.vue';
 
-// --- State Utama & UI ---
 const purchases = ref([]);
 const loading = ref(true);
 const isDetailModalOpen = ref(false);
 const selectedPurchaseId = ref(null);
-
-// --- State untuk Fitur Tabel ---
 const searchQuery = ref('');
 const sortOrder = ref('desc');
 const searchDebounceTimer = ref(null);
-
-// --- State untuk Pagination ---
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const totalPurchases = ref(0);
 
-// --- Computed Properties ---
 const totalPages = computed(() => {
   if (totalPurchases.value === 0) return 1;
   return Math.ceil(totalPurchases.value / itemsPerPage.value);
@@ -28,7 +23,6 @@ const totalPages = computed(() => {
 
 const filteredPurchases = computed(() => purchases.value);
 
-// --- Logika Inti ---
 async function fetchPurchases() {
   loading.value = true;
   const from = (currentPage.value - 1) * itemsPerPage.value;
@@ -59,7 +53,6 @@ async function fetchPurchases() {
   loading.value = false;
 }
 
-// --- Fungsi Helper & Navigasi ---
 function toggleSortOrder() {
   sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
 }
@@ -86,7 +79,6 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 }
 
-// --- Watchers ---
 watch([currentPage, sortOrder, itemsPerPage], fetchPurchases);
 
 watch(searchQuery, () => {
@@ -122,7 +114,7 @@ onMounted(fetchPurchases);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari" 
+            placeholder="Cari ID, supplier..." 
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
                    bg-gray-50 
                    focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
@@ -146,12 +138,13 @@ onMounted(fetchPurchases);
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Supplier</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider border-b">Dibuat Oleh</th>
               <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider border-b">Total</th>
-              </tr>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider border-b">Aksi</th>
+            </tr>
           </thead>
           <tbody class="bg-white">
-            <tr v-if="loading"><td colspan="5" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
+            <tr v-if="loading"><td colspan="6" class="p-6 text-center text-gray-500 border-t">Memuat data...</td></tr>
             <tr v-else-if="filteredPurchases.length === 0">
-              <td colspan="5" class="p-6 text-center text-gray-500 border-t">
+              <td colspan="6" class="p-6 text-center text-gray-500 border-t">
                 <span v-if="searchQuery">Transaksi tidak ditemukan.</span>
                 <span v-else>Tidak ada data pembelian.</span>
               </td>
@@ -159,16 +152,21 @@ onMounted(fetchPurchases);
             <tr 
               v-for="purchase in filteredPurchases" 
               :key="purchase.id" 
-              class="hover:bg-gray-100 transition cursor-pointer"
               @click="openDetailModal(purchase)"
+              class="hover:bg-gray-100 transition cursor-pointer"
             >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-t">{{ formatDate(purchase.created_at) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 border-t">{{ purchase.id.substring(0, 8) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-t">{{ purchase.suppliers?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 border-t">{{ purchase.profiles?.name || 'N/A' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 text-right font-semibold border-t">{{ formatCurrency(purchase.total_amount) }}</td>
-              </tr>
-          </tbody>
+              <td class="px-6 py-4 whitespace-nowrap text-center border-t">
+                <button @click.stop="openDetailModal(purchase)" class="p-2 text-primary hover:bg-secondary rounded-full" title="Lihat Detail">
+                  <Eye class="w-5 h-5" />
+                </button>
+              </td>
+            </tr>
+            </tbody>
         </table>
       </div>
     </div>
@@ -193,5 +191,6 @@ onMounted(fetchPurchases);
       </div>
     </div>
   </div>
+
   <PurchaseDetailModal :isOpen="isDetailModalOpen" :purchaseId="selectedPurchaseId" @close="isDetailModalOpen = false" />
 </template>
