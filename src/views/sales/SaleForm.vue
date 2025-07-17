@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import Swal from 'sweetalert2';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
-import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchableSelect from '../../components/common/SearchableSelect.vue';
 
 const router = useRouter();
 const loading = ref(false);

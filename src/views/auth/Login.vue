@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 import Swal from "sweetalert2";
 // Tambahkan ikon Eye dan EyeOff
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-vue-next";

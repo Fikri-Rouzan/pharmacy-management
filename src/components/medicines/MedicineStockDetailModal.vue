@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import { X } from 'lucide-vue-next';
 
 // Menerima props dari parent (Medicines.vue)

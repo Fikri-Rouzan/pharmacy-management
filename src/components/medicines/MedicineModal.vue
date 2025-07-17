@@ -1,8 +1,8 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
 import { X } from 'lucide-vue-next';
-import { supabase } from '../lib/supabaseClient';
-import SearchableSelect from './SearchableSelect.vue';
+import { supabase } from '../../lib/supabaseClient';
+import SearchableSelect from '../common/SearchableSelect.vue';
 
 const props = defineProps({
   isOpen: Boolean,

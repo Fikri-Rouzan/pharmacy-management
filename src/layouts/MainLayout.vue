@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import Sidebar from '../components/Sidebar.vue';
+import Sidebar from '../components/layout/Sidebar.vue';
 import { Menu, LogOut, UserCircle2 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import { supabase } from '../lib/supabaseClient';

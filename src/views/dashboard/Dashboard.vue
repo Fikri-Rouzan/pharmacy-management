@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Pill, ShoppingCart, Archive, Truck } from 'lucide-vue-next';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 const medicineCount = ref(0);
 const supplierCount = ref(0);

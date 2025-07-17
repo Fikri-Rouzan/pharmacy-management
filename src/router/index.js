@@ -1,23 +1,26 @@
-// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 import { supabase } from '../lib/supabaseClient';
 
-// Import Layout dan semua Halaman (Views)
+// --- PATH IMPORT DIPERBARUI SESUAI STRUKTUR FOLDER BARU ---
 import MainLayout from '../layouts/MainLayout.vue';
-import Login from '../views/Login.vue';
-import Dashboard from '../views/Dashboard.vue';
-import Profile from '../views/Profile.vue';
-import Medicines from '../views/Medicines.vue';
-import Sales from '../views/Sales.vue';
-import SaleForm from '../views/SaleForm.vue';
-import Purchases from '../views/Purchases.vue';
-import PurchaseForm from '../views/PurchaseForm.vue';
-import Suppliers from '../views/Suppliers.vue';
-import InactiveSuppliers from '../views/InactiveSuppliers.vue'; 
-import Guide from '../views/Guide.vue';
+import Login from '../views/auth/Login.vue';
+import Dashboard from '../views/dashboard/Dashboard.vue';
+import Profile from '../views/profile/Profile.vue';
+import Guide from '../views/guide/Guide.vue';
+import Medicines from '../views/medicines/Medicines.vue';
+import Sales from '../views/sales/Sales.vue';
+import SaleForm from '../views/sales/SaleForm.vue';
+import Purchases from '../views/purchases/Purchases.vue';
+import PurchaseForm from '../views/purchases/PurchaseForm.vue';
+import Suppliers from '../views/suppliers/Suppliers.vue';
+import InactiveSuppliers from '../views/suppliers/InactiveSuppliers.vue'; 
 
 const routes = [
-  { path: '/login', name: 'Login', component: Login },
+  { 
+    path: '/login', 
+    name: 'Login', 
+    component: Login 
+  },
   {
     path: '/',
     component: MainLayout,
@@ -33,8 +36,6 @@ const routes = [
       { path: 'purchases/new', name: 'PurchaseForm', component: PurchaseForm },
       { path: 'suppliers', name: 'Suppliers', component: Suppliers },
       { path: 'suppliers/inactive', name: 'InactiveSuppliers', component: InactiveSuppliers },
-
-      // --- TAMBAHKAN RUTE BARU DI SINI ---
       { path: 'guide', name: 'Guide', component: Guide },
     ]
   }

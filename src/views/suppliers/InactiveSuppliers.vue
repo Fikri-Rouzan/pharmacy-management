@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import Swal from 'sweetalert2';
 // Ikon yang digunakan di halaman ini
 import { ArrowLeft, ArchiveRestore } from 'lucide-vue-next';

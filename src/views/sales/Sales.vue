@@ -1,9 +1,9 @@
 <script setup>
 // Bagian script ini sudah benar dan tidak ada perubahan dari kode yang Anda berikan.
 import { ref, onMounted, computed, watch } from 'vue';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import { Plus, Eye, Search, ArrowDownUp } from 'lucide-vue-next';
-import SaleDetailModal from '../components/SaleDetailModal.vue';
+import SaleDetailModal from '../../components/sales/SaleDetailModal.vue';
 
 const sales = ref([]);
 const loading = ref(true);

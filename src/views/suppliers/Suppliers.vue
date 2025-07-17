@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import Swal from 'sweetalert2';
-import SupplierModal from '../components/SupplierModal.vue';
-import SupplierDetailModal from '../components/SupplierDetailModal.vue';
+import SupplierModal from '../../components/suppliers/SupplierModal.vue';
+import SupplierDetailModal from '../../components/suppliers/SupplierDetailModal.vue';
 import { Plus, Edit, Trash2, Search, Eye, Archive, ArrowDownUp } from 'lucide-vue-next';
 
 // --- State Utama & UI ---

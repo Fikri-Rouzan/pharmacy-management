@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router'; // [BARU] Import useRouter
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import Swal from 'sweetalert2';
 import { UploadCloud, Trash2, User, Mail, ArrowLeft } from 'lucide-vue-next'; // [BARU] Import ArrowLeft
 

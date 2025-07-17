@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import Swal from 'sweetalert2';
-import MedicineModal from '../components/MedicineModal.vue';
-import MedicineStockDetailModal from '../components/MedicineStockDetailModal.vue';
+import MedicineModal from '../../components/medicines/MedicineModal.vue';
+import MedicineStockDetailModal from '../../components/medicines/MedicineStockDetailModal.vue';
 import { Plus, Edit, Trash2, Search, Boxes } from 'lucide-vue-next';
 
 // --- State untuk Pagination & Data ---
