@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Sidebar from '../components/layout/Sidebar.vue';
-import BottomNavBar from '../components/layout/BottomNavBar.vue'; // <-- 1. Import komponen baru
+import BottomNavBar from '../components/layout/BottomNavBar.vue'; // <-- Import Navigasi Bawah
 import { Menu, LogOut, UserCircle2 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import { supabase } from '../lib/supabaseClient';
@@ -14,7 +14,7 @@ const userName = ref('');
 const avatarUrl = ref(null); // <-- State untuk foto profil
 const userMenu = ref(null);
 
-const primaryColor = '#4a86c5'; // Menggunakan warna tema Anda
+const primaryColor = '#4a86c5';
 
 const openSidebar = () => { isSidebarOpen.value = true; };
 const closeSidebar = () => { isSidebarOpen.value = false; };
@@ -29,6 +29,7 @@ const closeProfileMenuOnClickOutside = (event) => {
   }
 };
 
+// Fungsi handleLogout ini akan dipanggil oleh event dari Sidebar
 const handleLogout = async () => {
   isProfileMenuOpen.value = false;
   Swal.fire({
@@ -87,7 +88,8 @@ onUnmounted(() => {
 
 <template>
   <div class="flex h-screen bg-gray-100 font-sans">
-    <Sidebar :isOpen="isSidebarOpen" @close="closeSidebar" />
+    <!-- Sidebar sekarang "mendengarkan" event @logout -->
+    <Sidebar :isOpen="isSidebarOpen" @close="closeSidebar" @logout="handleLogout" />
 
     <div class="flex-1 flex flex-col overflow-hidden">
       <header class="flex items-center justify-between px-4 sm:px-6 bg-white shadow-sm h-16 flex-shrink-0 z-30">
@@ -95,7 +97,6 @@ onUnmounted(() => {
           <button @click="openSidebar" class="text-gray-600 focus:outline-none md:hidden">
             <Menu class="w-6 h-6"/>
           </button>
-          <!-- Judul header bisa disembunyikan di mobile jika terlalu ramai -->
           <h1 class="text-lg font-semibold text-gray-800 ml-4 md:ml-0 hidden sm:block">Sistem Inventaris Apotek</h1>
         </div>
         
@@ -114,26 +115,23 @@ onUnmounted(() => {
               leave-from-class="transform opacity-100 scale-100"
               leave-to-class="transform opacity-0 scale-95"
             >
+            <!-- Menu dropdown sekarang hanya berisi link ke Profil -->
             <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-20">
               <router-link to="/profile" @click="isProfileMenuOpen = false" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 <UserCircle2 class="w-5 h-5 mr-3" />
                 Profil Saya
               </router-link>
-              <a href="#" @click.prevent="handleLogout" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                <LogOut class="w-5 h-5 mr-3" />
-                Logout
-              </a>
             </div>
           </transition>
         </div>
       </header>
       
-      <!-- 2. Tambahkan padding bawah untuk mobile -->
+      <!-- Tambahkan padding bawah untuk mobile -->
       <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 pb-20 md:pb-6">
         <router-view />
       </main>
 
-      <!-- 3. Panggil komponen navigasi bawah di sini -->
+      <!-- Panggil komponen navigasi bawah di sini -->
       <BottomNavBar />
     </div>
   </div>

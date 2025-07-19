@@ -16,7 +16,7 @@ const selectedSupplierId = ref(null);
 const selectedMedicineId = ref(null);
 const quantity = ref(1);
 const purchasePrice = ref(0);
-const expiryDate = ref('');// [BARU] State untuk tanggal kedaluwarsa
+const expiryDate = ref(''); // [BARU] State untuk tanggal kedaluwarsa
 const cart = ref([]);
 
 // --- Computed Properties ---
@@ -25,26 +25,21 @@ const filteredMedicines = computed(() => {
   return allMedicines.value.filter(med => med.supplier_id === selectedSupplierId.value);
 });
 
-const grandTotal = computed(() => {
-  return cart.value.reduce((total, item) => total + item.subtotal, 0);
-});
+const grandTotal = computed(() => cart.value.reduce((total, item) => total + item.subtotal, 0));
 
 // --- Watchers ---
 watch(selectedMedicineId, (newMedicineId) => {
   if (newMedicineId) {
     const selected = allMedicines.value.find(m => m.id === newMedicineId);
-    if (selected) {
-      purchasePrice.value = selected.purchase_price || 0;
-    }
+    if (selected) purchasePrice.value = selected.purchase_price || 0;
   }
 });
 
 watch(selectedSupplierId, () => {
-    selectedMedicineId.value = null;
-    purchasePrice.value = 0;
-    expiryDate.value = ''; 
+  selectedMedicineId.value = null;
+  purchasePrice.value = 0;
+  expiryDate.value = '';
 });
-
 
 // --- Methods ---
 async function fetchData() {
@@ -55,31 +50,35 @@ async function fetchData() {
   allMedicines.value = medicineData || [];
 }
 
-const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('id-ID', {
+    style: 'currency', 
+    currency: 'IDR', 
+    minimumFractionDigits: 0
+  }).format(value || 0);
 
 function addToCart() {
-  // [DIUBAH] Tambahkan validasi untuk tanggal kedaluwarsa
   if (!selectedMedicineId.value || quantity.value <= 0 || purchasePrice.value <= 0 || !expiryDate.value) {
-    Swal.fire('Info', 'Pilih obat, lalu isi jumlah, harga beli, dan tanggal kedaluwarsa yang valid.', 'info');
+    Swal.fire(
+      'Info',
+      'Pilih obat, lalu isi jumlah, harga beli, dan tanggal kedaluwarsa yang valid.',
+      'info'
+    );
     return;
   }
   const selected = allMedicines.value.find(m => m.id === selectedMedicineId.value);
-  
-  // [DIUBAH] Masukkan tanggal kedaluwarsa ke dalam keranjang
   cart.value.push({
     medicine_id: selected.id,
     name: selected.name,
     quantity: quantity.value,
     purchase_price: purchasePrice.value,
-    expiry_date: expiryDate.value, // [BARU]
+    expiry_date: expiryDate.value,
     subtotal: purchasePrice.value * quantity.value
   });
-
-  // Reset semua field input
   selectedMedicineId.value = null;
   quantity.value = 1;
   purchasePrice.value = 0;
-  expiryDate.value = ''; // [BARU]
+  expiryDate.value = '';
 }
 
 function removeFromCart(index) {
@@ -94,14 +93,16 @@ async function savePurchase() {
   loading.value = true;
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: purchaseData, error: purchaseError } = await supabase.from('purchases').insert({
-      employee_id: user.id,
-      supplier_id: selectedSupplierId.value,
-      total_amount: grandTotal.value
-    }).select('id').single();
-    
+    const { data: purchaseData, error: purchaseError } =
+      await supabase.from('purchases')
+        .insert({
+          employee_id: user.id,
+          supplier_id: selectedSupplierId.value,
+          total_amount: grandTotal.value
+        })
+        .select('id')
+        .single();
     if (purchaseError) throw purchaseError;
-    
     const purchaseId = purchaseData.id;
 
     const itemsToInsert = cart.value.map(item => ({
@@ -117,24 +118,28 @@ async function savePurchase() {
 
     // --- BAGIAN YANG DIPERBAIKI ADA DI SINI ---
     for (const item of cart.value) {
-      // Sekarang kita update harga beli DAN supplier ID sekaligus
+      // Update harga beli dan supplier ID
       await supabase
         .from('medicines')
         .update({ 
           purchase_price: item.purchase_price,
-          supplier_id: selectedSupplierId.value // <-- BARIS INI DITAMBAHKAN
+          supplier_id: selectedSupplierId.value
         })
         .eq('id', item.medicine_id);
       
-      // Update stok tetap berjalan seperti biasa
-      await supabase.rpc('increment_stock', {
-        medicine_id_input: item.medicine_id,
-        quantity_input: item.quantity
-      });
+      // Hapus pemanggilan RPC increment_stock agar trigger handle_purchase_sync yang mengelola stok
+      // await supabase.rpc('increment_stock', {
+      //   medicine_id_input: item.medicine_id,
+      //   quantity_input: item.quantity
+      // });
     }
     // --- AKHIR DARI PERBAIKAN ---
 
-    Swal.fire('Sukses!', 'Transaksi pembelian berhasil disimpan. Stok, harga, dan supplier telah diperbarui.', 'success');
+    Swal.fire(
+      'Sukses!',
+      'Transaksi pembelian berhasil disimpan. Stok, harga, dan supplier telah diperbarui.',
+      'success'
+    );
     router.push('/purchases');
 
   } catch (error) {
@@ -191,15 +196,15 @@ onMounted(fetchData);
               </div>
               <div>
                 <label for="purchasePrice" class="block text-sm font-medium text-gray-700">Harga Beli</label>
-                <input v-model.number="purchasePrice" type="number" id="purchasePrice" min="0" placeholder="Otomatis" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                <input v-model.number="purchasePrice" type="number" id="purchasePrice" min="0" placeholder="Otomatis" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" />
               </div>
               <div>
                 <label for="expiryDate" class="block text-sm font-medium text-gray-700">Tgl. Kedaluwarsa</label>
-                <input v-model="expiryDate" type="date" id="expiryDate" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                <input v-model="expiryDate" type="date" id="expiryDate" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" />
               </div>
               <div>
                 <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                <input v-model.number="quantity" type="number" id="quantity" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                <input v-model.number="quantity" type="number" id="quantity" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" />
               </div>
             </div>
             <button @click="addToCart" class="mt-4 flex items-center w-full justify-center px-4 py-2 bg-blue-100 text-primary rounded-lg shadow-sm hover:bg-blue-200 transition font-semibold">
@@ -228,7 +233,7 @@ onMounted(fetchData);
             </div>
           </div>
         </div>
-        <hr class="my-4">
+        <hr class="my-4" />
         <div class="flex justify-between items-center font-bold text-xl">
           <span>Total:</span>
           <span>{{ formatCurrency(grandTotal) }}</span>

@@ -33,9 +33,9 @@ import {
           Untuk menjaga integritas data, ikuti alur kerja berikut saat ada obat baru yang masuk ke apotek Anda:
         </p>
         <ol class="list-decimal list-inside space-y-2 text-gray-700 pl-4">
-          <li><strong>Daftarkan Obat Baru:</strong> Pergi ke menu <code class="font-mono bg-gray-100 px-1 rounded">Data Obat</code> &rarr; <code class="bg-gray-100 px-1 rounded">Tambah Obat</code>. Stok awal untuk obat baru **selalu 0**.</li>
+          <li><strong>Daftarkan Obat Baru:</strong> Pergi ke menu <code class="font-mono bg-gray-100 px-1 rounded">Data Obat</code> &rarr; <code class="bg-gray-100 px-1 rounded">Tambah Obat</code>. Stok awal untuk obat baru selalu 0.</li>
           <li><strong>Daftarkan Supplier Baru:</strong> Jika pemasok baru, pergi ke <code class="font-mono bg-gray-100 px-1 rounded">Data Supplier</code> &rarr; <code class="bg-gray-100 px-1 rounded">Tambah Supplier</code>.</li>
-          <li><strong>Catat Transaksi Pembelian:</strong> Ini adalah langkah kunci. Pergi ke <code class="font-mono bg-gray-100 px-1 rounded">Data Pembelian</code> &rarr; <code class="bg-gray-100 px-1 rounded">Catat Pembelian</code>. Proses ini akan **otomatis** menambah stok, mencatat harga beli, dan tanggal kedaluwarsa.</li>
+          <li><strong>Catat Transaksi Pembelian:</strong> Ini adalah langkah kunci. Pergi ke <code class="font-mono bg-gray-100 px-1 rounded">Data Pembelian</code> &rarr; <code class="bg-gray-100 px-1 rounded">Catat Pembelian</code>. Proses ini akan otomatis menambah stok, mencatat harga beli, dan tanggal kedaluwarsa.</li>
           <li><strong>Lakukan Transaksi Penjualan:</strong> Setelah stok masuk, obat siap dijual melalui menu <code class="font-mono bg-gray-100 px-1 rounded">Data Penjualan</code> &rarr; <code class="bg-gray-100 px-1 rounded">Catat Penjualan</code>.</li>
         </ol>
       </div>

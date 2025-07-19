@@ -12,7 +12,7 @@ const loading = ref(false);
 // --- State ---
 const allMedicines = ref([]);
 const selectedMedicineId = ref(null);
-const quantityToSell = ref(1); // Jumlah yang ingin dijual
+const quantityToSell = ref(1);
 const cart = ref([]);
 
 // --- Computed Properties ---
@@ -40,8 +40,8 @@ async function fetchData() {
 const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
 const formatDate = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
-// --- FUNGSI KUNCI: Logika FEFO Otomatis ---
-async function handleAddToCart() {
+// --- FUNGSI DIPERBARUI UNTUK MENCEGAH DUPLIKAT ---
+function handleAddToCart() {
   if (!selectedMedicineId.value || quantityToSell.value <= 0) {
     Swal.fire('Info', 'Pilih obat dan masukkan jumlah yang valid.', 'info');
     return;
@@ -49,53 +49,33 @@ async function handleAddToCart() {
 
   const medicine = allMedicines.value.find(m => m.id === selectedMedicineId.value);
   if (!medicine) return;
+  
+  // Cek apakah item sudah ada di keranjang
+  const existingCartItem = cart.value.find(item => item.medicine_id === selectedMedicineId.value);
+
+  // Hitung total kuantitas yang dibutuhkan (yang sudah ada di keranjang + yang baru)
+  const totalQuantityNeeded = (existingCartItem ? existingCartItem.quantity : 0) + quantityToSell.value;
 
   // 1. Cek apakah stok total mencukupi
-  if (medicine.stock_quantity < quantityToSell.value) {
-    Swal.fire('Stok Tidak Cukup', `Stok total ${medicine.name} hanya tersisa ${medicine.stock_quantity}.`, 'error');
+  if (medicine.stock_quantity < totalQuantityNeeded) {
+    Swal.fire('Stok Tidak Cukup', `Stok ${medicine.name} hanya tersisa ${medicine.stock_quantity}. Anda sudah memiliki ${existingCartItem ? existingCartItem.quantity : 0} di keranjang.`, 'error');
     return;
   }
 
-  // 2. Ambil semua batch yang tersedia untuk obat ini (sudah diurutkan berdasarkan ED terdekat oleh fungsi SQL)
-  const { data: batches, error } = await supabase.rpc('get_stock_details_by_medicine', {
-    medicine_id_input: selectedMedicineId.value
-  });
-
-  if (error) {
-    Swal.fire('Error', 'Gagal mengambil data batch.', 'error');
-    return;
-  }
-
-  let remainingQty = quantityToSell.value;
-
-  // 3. Loop melalui setiap batch untuk memenuhi permintaan
-  for (const batch of batches) {
-    if (remainingQty <= 0) break; // Jika permintaan sudah terpenuhi, berhenti.
-    if (batch.quantity_remaining <= 0) continue; // Lewati batch yang stoknya kosong.
-
-    const qtyFromThisBatch = Math.min(remainingQty, batch.quantity_remaining);
-
-    // Cek apakah item dari batch ini sudah ada di keranjang
-    const existingCartItem = cart.value.find(item => item.purchase_item_id === batch.purchase_item_id);
-    
-    if (existingCartItem) {
-      // Jika sudah ada, update quantity-nya
-      existingCartItem.quantity += qtyFromThisBatch;
-      existingCartItem.subtotal = existingCartItem.quantity * existingCartItem.price;
-    } else {
-      // Jika belum, tambahkan item baru ke keranjang
-      cart.value.push({
-        purchase_item_id: batch.purchase_item_id,
-        medicine_id: selectedMedicineId.value,
-        name: medicine.name,
-        price: medicine.selling_price,
-        quantity: qtyFromThisBatch,
-        subtotal: qtyFromThisBatch * medicine.selling_price,
-        expiry_date: batch.expiry_date,
-      });
-    }
-
-    remainingQty -= qtyFromThisBatch;
+  if (existingCartItem) {
+    // Jika sudah ada, perbarui jumlah dan subtotalnya
+    existingCartItem.quantity += quantityToSell.value;
+    existingCartItem.subtotal = existingCartItem.quantity * existingCartItem.price;
+  } else {
+    // Jika belum ada, tambahkan sebagai item baru
+    cart.value.push({
+      medicine_id: selectedMedicineId.value,
+      name: medicine.name,
+      price: medicine.selling_price,
+      quantity: quantityToSell.value,
+      subtotal: quantityToSell.value * medicine.selling_price,
+      // Kita tidak perlu expiry_date di keranjang penjualan
+    });
   }
 
   // Reset input form
@@ -121,22 +101,17 @@ async function saveSale() {
     
     const saleId = saleData.id;
 
+    // Kita tidak lagi menyimpan purchase_item_id di sale_items
     const itemsToInsert = cart.value.map(item => ({
       sale_id: saleId,
       medicine_id: item.medicine_id,
-      purchase_item_id: item.purchase_item_id,
       quantity: item.quantity,
       price: item.price
     }));
     const { error: itemsError } = await supabase.from('sale_items').insert(itemsToInsert);
     if (itemsError) throw itemsError;
 
-    for (const item of cart.value) {
-      await supabase.rpc('decrement_stock', {
-        medicine_id_input: item.medicine_id,
-        quantity_input: item.quantity
-      });
-    }
+    // Trigger di database akan menangani pengurangan stok secara otomatis
 
     Swal.fire('Sukses!', 'Transaksi penjualan berhasil disimpan. Stok telah diperbarui.', 'success');
     router.push('/sales');
@@ -198,7 +173,7 @@ onMounted(fetchData);
             <div>
               <p class="font-semibold">{{ item.name }}</p>
               <p class="text-sm text-gray-500">{{ item.quantity }} x {{ formatCurrency(item.price) }}</p>
-              <p class="text-xs text-red-600">Batch ED: {{ formatDate(item.expiry_date) }}</p>
+              <!-- Info ED tidak relevan di keranjang penjualan, jadi dihilangkan -->
             </div>
             <div class="flex items-center">
               <p class="font-semibold mr-4">{{ formatCurrency(item.subtotal) }}</p>
