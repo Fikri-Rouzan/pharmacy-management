@@ -26,9 +26,6 @@ const totalPages = computed(() => {
   return Math.ceil(totalMedicines.value / itemsPerPage.value);
 });
 
-// Computed property tidak lagi diperlukan untuk filter karena sudah di server
-const filteredMedicines = computed(() => medicines.value);
-
 // --- Data Fetching & Logic ---
 async function fetchMedicines() {
   loading.value = true;
@@ -39,7 +36,7 @@ async function fetchMedicines() {
     .from('medicines')
     .select(`id, name, type, selling_price, stock_quantity, supplier_id, suppliers(name)`, { count: 'exact' });
 
-  // Filter di sisi server
+  // Pencarian dilakukan di sisi server untuk performa lebih baik
   if (searchQuery.value) {
     const q = `%${searchQuery.value}%`;
     query = query.or(`name.ilike.${q},type.ilike.${q},suppliers.name.ilike.${q}`);
@@ -70,22 +67,15 @@ function prevPage() {
   }
 }
 
-// Watcher untuk mereset ke halaman 1 jika item per halaman berubah
-watch(itemsPerPage, () => {
-  currentPage.value = 1;
-});
+watch([currentPage, itemsPerPage], fetchMedicines);
 
-// Watcher untuk pencarian dengan debounce
 watch(searchQuery, () => {
   clearTimeout(searchDebounceTimer.value);
   searchDebounceTimer.value = setTimeout(() => {
-    currentPage.value = 1; 
+    currentPage.value = 1;
     fetchMedicines();
-  }, 300); 
+  }, 300);
 });
-
-// Watcher untuk pindah halaman
-watch(currentPage, fetchMedicines);
 
 onMounted(fetchMedicines);
 
@@ -132,7 +122,9 @@ async function handleDelete(medicine) {
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
     confirmButtonText: 'Ya, hapus!',
+    cancelButtonText: 'Batal'
   });
 
   if (isConfirmed) {
@@ -162,11 +154,8 @@ async function handleDelete(medicine) {
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Cari" 
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
-                   bg-gray-50 
-                   focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary 
-                   transition duration-200"
+            placeholder="Cari obat, tipe, supplier..." 
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
           >
         </div>
         <button @click="openAddModal" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-opacity-90 transition whitespace-nowrap">
@@ -203,7 +192,7 @@ async function handleDelete(medicine) {
               v-for="medicine in medicines" 
               :key="medicine.id" 
               @click="openStockDetailModal(medicine)"
-              class="hover:bg-gray-100 transition cursor-pointer"
+              class="hover:bg-gray-50 transition cursor-pointer"
             >
               <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 border-t">{{ medicine.name }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-gray-600 border-t">{{ medicine.type }}</td>
@@ -244,12 +233,17 @@ async function handleDelete(medicine) {
     </div>
   </div>
 
-  <MedicineModal :isOpen="isFormModalOpen" :medicineData="selectedMedicine" @close="isFormModalOpen = false" @save="handleSave" />
+  <MedicineModal 
+    :isOpen="isFormModalOpen" 
+    :medicineData="selectedMedicine" 
+    @close="isFormModalOpen = false" 
+    @save="handleSave"
+  />
   
   <MedicineStockDetailModal 
     :isOpen="isStockModalOpen" 
-    :medicineId="selectedMedicine?.id" 
-    :medicineName="selectedMedicine?.name" 
+    :medicineId="selectedMedicine?.id"
+    :medicineName="selectedMedicine?.name"
     @close="isStockModalOpen = false" 
   />
 </template>
